@@ -238,7 +238,33 @@ export function AdvancedInventory({
 
       {/* Movements Tab */}
       {activeTab === 'movements' && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="space-y-4">
+          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+            <div className="flex items-center space-x-4">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type="text"
+                  placeholder="Buscar movimientos..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <select
+                value={selectedWarehouse}
+                onChange={(e) => setSelectedWarehouse(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="all">Todos los almacenes</option>
+                {warehouses.map(warehouse => (
+                  <option key={warehouse.id} value={warehouse.id}>{warehouse.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50">
@@ -249,44 +275,82 @@ export function AdvancedInventory({
                   <th className="text-left py-3 px-4 font-medium text-gray-500">Cantidad</th>
                   <th className="text-left py-3 px-4 font-medium text-gray-500">Almacén</th>
                   <th className="text-left py-3 px-4 font-medium text-gray-500">Motivo</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-500">Usuario</th>
                 </tr>
               </thead>
               <tbody>
-                {movements.map((movement) => {
+                {movements
+                  .filter(movement => {
+                    const product = products.find(p => p.id === movement.productId);
+                    const matchesSearch = !searchTerm || 
+                      product?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      movement.reason.toLowerCase().includes(searchTerm.toLowerCase());
+                    const matchesWarehouse = selectedWarehouse === 'all' || 
+                      movement.toWarehouseId === selectedWarehouse ||
+                      movement.fromWarehouseId === selectedWarehouse;
+                    return matchesSearch && matchesWarehouse;
+                  })
+                  .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                  .map((movement) => {
                   const product = products.find(p => p.id === movement.productId);
+                  const warehouse = warehouses.find(w => w.id === movement.toWarehouseId || w.id === movement.fromWarehouseId);
                   return (
                     <tr key={movement.id} className="border-b border-gray-100 hover:bg-gray-50">
                       <td className="py-3 px-4 text-sm text-gray-600">
-                        {new Date(movement.created_at).toLocaleDateString()}
+                        {new Date(movement.created_at).toLocaleDateString('es-CO', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
                       </td>
                       <td className="py-3 px-4 font-medium text-gray-900">
-                        {product?.name || 'Producto eliminado'}
+                        <div>
+                          <p>{product?.name || 'Producto eliminado'}</p>
+                          <p className="text-xs text-gray-500">SKU: {product?.sku || 'N/A'}</p>
+                        </div>
                       </td>
                       <td className="py-3 px-4">
                         <span className={`px-2 py-1 text-xs rounded-full ${
                           movement.type === 'in' ? 'bg-green-100 text-green-800' :
                           movement.type === 'out' ? 'bg-red-100 text-red-800' :
                           movement.type === 'transfer' ? 'bg-blue-100 text-blue-800' :
+                          movement.type === 'physical_count' ? 'bg-purple-100 text-purple-800' :
                           'bg-yellow-100 text-yellow-800'
                         }`}>
                           {movement.type === 'in' ? 'Entrada' :
                            movement.type === 'out' ? 'Salida' :
                            movement.type === 'transfer' ? 'Transferencia' :
+                           movement.type === 'physical_count' ? 'Conteo Físico' :
                            'Ajuste'}
                         </span>
                       </td>
                       <td className="py-3 px-4 font-semibold">
-                        {movement.type === 'out' ? '-' : '+'}{movement.quantity}
+                        <span className={movement.type === 'out' || (movement.type === 'physical_count' && movement.quantity < 0) ? 'text-red-600' : 'text-green-600'}>
+                          {movement.type === 'out' || (movement.type === 'physical_count' && movement.quantity < 0) ? '-' : '+'}{Math.abs(movement.quantity)}
+                        </span>
                       </td>
                       <td className="py-3 px-4 text-gray-600">
-                        {warehouses.find(w => w.id === movement.toWarehouseId)?.name || 'N/A'}
+                        {warehouse?.name || 'N/A'}
                       </td>
-                      <td className="py-3 px-4 text-gray-600">{movement.reason}</td>
+                      <td className="py-3 px-4 text-gray-600">
+                        <div>
+                          <p className="text-sm">{movement.reason}</p>
+                          {movement.reference && (
+                            <p className="text-xs text-gray-500">Ref: {movement.reference}</p>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-gray-600 text-sm">
+                        Usuario #{movement.userId}
+                      </td>
                     </tr>
                   );
-                })}
+                  })}
               </tbody>
             </table>
+          </div>
           </div>
         </div>
       )}

@@ -658,7 +658,7 @@ function App() {
           id: Date.now().toString(),
           status,
           timestamp: new Date().toISOString(),
-          notes
+          notes: notes || `Estado actualizado por ${currentUser?.name || 'Usuario'}`
         };
         return {
           ...order,
@@ -722,11 +722,13 @@ function App() {
       const { detail } = event;
       const movement = {
         id: Date.now().toString(),
-        type: detail.type,
+        type: detail.type as 'in' | 'out' | 'transfer' | 'adjustment' | 'physical_count',
         productId: detail.productId,
         toWarehouseId: detail.warehouseId,
+        fromWarehouseId: detail.fromWarehouseId,
         quantity: detail.quantity,
         reason: detail.reason,
+        reference: detail.reference,
         userId: currentUser?.id || '1',
         tenantId: currentUser?.tenantId || 'tenant1',
         created_at: new Date().toISOString()

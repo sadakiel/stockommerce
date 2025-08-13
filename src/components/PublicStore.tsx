@@ -172,11 +172,35 @@ export function PublicStore({ products, tenant, campaigns, bannerSettings, produ
               <select
                 value={language}
                 onChange={(e) => changeLanguage(e.target.value as 'es' | 'en')}
-                className="px-3 py-1 border border-gray-300 rounded text-sm"
+                className="hidden"
               >
                 <option value="es">🇪🇸 Español</option>
                 <option value="en">🇺🇸 English</option>
               </select>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => changeLanguage('es')}
+                  className={`p-2 rounded-lg transition-colors ${
+                    language === 'es' 
+                      ? 'bg-blue-100 border-2 border-blue-500' 
+                      : 'border-2 border-gray-300 hover:border-gray-400'
+                  }`}
+                  title="Español"
+                >
+                  <span className="text-2xl">🇨🇴</span>
+                </button>
+                <button
+                  onClick={() => changeLanguage('en')}
+                  className={`p-2 rounded-lg transition-colors ${
+                    language === 'en' 
+                      ? 'bg-blue-100 border-2 border-blue-500' 
+                      : 'border-2 border-gray-300 hover:border-gray-400'
+                  }`}
+                  title="English"
+                >
+                  <span className="text-2xl">🇺🇸</span>
+                </button>
+              </div>
               <button
                 onClick={() => setShowCart(true)}
                 className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
@@ -390,8 +414,8 @@ export function PublicStore({ products, tenant, campaigns, bannerSettings, produ
         )}
 
         {/* Search and Filters */}
-        <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200 mb-6">
-          <div className="flex flex-col lg:flex-row gap-4">
+        <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 mb-8">
+          <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
@@ -399,29 +423,15 @@ export function PublicStore({ products, tenant, campaigns, bannerSettings, produ
                 placeholder={language === 'es' ? 'Buscar productos...' : 'Search products...'}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full pl-10 pr-4 py-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg"
               />
             </div>
             
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <Filter className="text-gray-400 w-5 h-5" />
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="">{t('allCategories')}</option>
-                  {categories.map(category => (
-                    <option key={category} value={category}>{category}</option>
-                  ))}
-                </select>
-              </div>
-              
+            <div className="flex flex-col sm:flex-row gap-3">
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="px-4 py-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="">{language === 'es' ? 'Ordenar por' : 'Sort by'}</option>
                 <option value="recent_offers">{t('recentOffers')}</option>
@@ -430,16 +440,16 @@ export function PublicStore({ products, tenant, campaigns, bannerSettings, produ
                 <option value="price_low_high">{t('priceLowToHigh')}</option>
               </select>
               
-              <div className="flex border border-gray-300 rounded-lg">
+              <div className="flex border border-gray-300 rounded-lg overflow-hidden">
                 <button
                   onClick={() => setViewMode('grid')}
-                  className={`p-2 ${viewMode === 'grid' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+                  className={`px-4 py-4 transition-colors ${viewMode === 'grid' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
                 >
                   <Grid className="w-5 h-5" />
                 </button>
                 <button
                   onClick={() => setViewMode('list')}
-                  className={`p-2 ${viewMode === 'list' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+                  className={`px-4 py-4 transition-colors ${viewMode === 'list' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
                 >
                   <List className="w-5 h-5" />
                 </button>

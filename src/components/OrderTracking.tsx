@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Package, Truck, CheckCircle, Clock, MapPin, Phone, Mail, User, Store, CreditCard } from 'lucide-react';
+import { Package, Truck, CheckCircle, Clock, MapPin, Phone, Mail, User, Store, CreditCard, Edit, Save, X } from 'lucide-react';
 import { OnlineOrder, OrderStatus } from '../types/orders';
 import { Sale } from '../App';
 
@@ -7,11 +7,14 @@ interface OrderTrackingProps {
   orders: OnlineOrder[];
   recentSales: Sale[];
   onUpdateOrderStatus: (orderId: string, status: OrderStatus['status'], notes?: string) => void;
+  currentUser: any;
 }
 
-export function OrderTracking({ orders, recentSales, onUpdateOrderStatus }: OrderTrackingProps) {
+export function OrderTracking({ orders, recentSales, onUpdateOrderStatus, currentUser }: OrderTrackingProps) {
   const [selectedOrder, setSelectedOrder] = useState<OnlineOrder | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [editingStatus, setEditingStatus] = useState<{ orderId: string; status: OrderStatus['status'] } | null>(null);
+  const [statusNotes, setStatusNotes] = useState('');
 
   const filteredOrders = orders.filter(order =>
     order.ticketCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -31,6 +34,19 @@ export function OrderTracking({ orders, recentSales, onUpdateOrderStatus }: Orde
   const getStatusProgress = (status: OrderStatus['status']) => {
     const statuses = ['pedido_realizado', 'en_alistamiento', 'confirmado_pago', 'enviado', 'con_transportador', 'entregado'];
     return statuses.indexOf(status) + 1;
+  };
+
+  const handleUpdateStatus = (orderId: string, newStatus: OrderStatus['status']) => {
+    setEditingStatus({ orderId, status: newStatus });
+    setStatusNotes('');
+  };
+
+  const confirmStatusUpdate = () => {
+    if (editingStatus) {
+      onUpdateOrderStatus(editingStatus.orderId, editingStatus.status, statusNotes || `Estado actualizado por ${currentUser?.name || 'Usuario'}`);
+      setEditingStatus(null);
+      setStatusNotes('');
+    }
   };
 
   return (
@@ -158,18 +174,19 @@ export function OrderTracking({ orders, recentSales, onUpdateOrderStatus }: Orde
                   {Object.entries(statusConfig).map(([status, config]) => {
                     const isCompleted = getStatusProgress(status as any) <= progress;
                     const isCurrent = order.currentStatus === status;
+                    const canUpdate = getStatusProgress(status as any) === progress + 1 || isCurrent;
                     
                     return (
                       <button
                         key={status}
-                        onClick={() => onUpdateOrderStatus(order.id, status as any)}
-                        disabled={isCompleted && !isCurrent}
+                        onClick={() => canUpdate ? handleUpdateStatus(order.id, status as any) : null}
+                        disabled={!canUpdate}
                         className={`p-2 text-xs rounded-lg transition-colors ${
                           isCurrent 
                             ? config.color
-                            : isCompleted
-                            ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
-                            : 'border border-gray-300 hover:bg-gray-50'
+                            : canUpdate
+                            ? 'border border-gray-300 hover:bg-gray-50'
+                            : 'bg-gray-100 text-gray-500 cursor-not-allowed'
                         }`}
                       >
                         {config.label}
@@ -284,6 +301,63 @@ export function OrderTracking({ orders, recentSales, onUpdateOrderStatus }: Orde
                   })}
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Status Update Modal */}
+      {editingStatus && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-semibold">Actualizar Estado</h3>
+              <button
+                onClick={() => setEditingStatus(null)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Nuevo Estado
+                </label>
+                <div className={`p-3 rounded-lg ${statusConfig[editingStatus.status].color}`}>
+                  {statusConfig[editingStatus.status].label}
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Notas (opcional)
+                </label>
+                <textarea
+                  value={statusNotes}
+                  onChange={(e) => setStatusNotes(e.target.value)}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Agregar notas sobre el cambio de estado..."
+                />
+              </div>
+            </div>
+            
+            <div className="flex space-x-3 mt-6">
+              <button
+                onClick={() => setEditingStatus(null)}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmStatusUpdate}
+                className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
+              >
+                <Save className="w-4 h-4" />
+                <span>Actualizar Estado</span>
+              </button>
             </div>
           </div>
         </div>

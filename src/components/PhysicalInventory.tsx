@@ -99,15 +99,17 @@ export function PhysicalInventory({ products, onCreatePhysicalCount, onBack, cur
       if (item.difference !== 0) {
         const product = getProductById(item.productId);
         if (product) {
-          // This would trigger a movement creation in the parent component
+          // Trigger movement creation for each difference
           window.dispatchEvent(new CustomEvent('createInventoryMovement', {
             detail: {
-              type: 'physical_count',
+              type: 'adjustment',
               productId: item.productId,
               warehouseId: selectedWarehouse,
               quantity: Math.abs(item.difference || 0),
-              reason: `Conteo físico: ${countName}. ${item.notes || 'Ajuste de inventario'}`,
-              isPositive: (item.difference || 0) > 0
+              reason: `Conteo físico: ${countName}`,
+              reference: `CF-${Date.now()}`,
+              isPositive: (item.difference || 0) > 0,
+              notes: item.notes || 'Ajuste por conteo físico'
             }
           }));
         }
