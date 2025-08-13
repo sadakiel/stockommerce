@@ -32,6 +32,7 @@ import { Campaign, BannerSettings, ProductHighlight } from './types/campaigns';
 import { OnlineOrder, CustomerInfo, OrderStatus, Commission } from './types/orders';
 import { OrderTracking } from './components/OrderTracking';
 import { CustomerSearch } from './components/CustomerSearch';
+import { UserProfile } from './components/UserProfile';
 import { Store } from 'lucide-react';
 
 export interface User {
