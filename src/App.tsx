@@ -926,6 +926,10 @@ function App() {
           {currentView === 'settings' && userPermissions.settings && (
             <Settings
               tenant={currentTenant!}
+              documentNumberings={documentNumberings.filter(n => n.tenantId === currentUser.tenantId)}
+              onCreateNumbering={createDocumentNumbering}
+              onUpdateNumbering={updateDocumentNumbering}
+              onDeleteNumbering={deleteDocumentNumbering}
               onUpdateTenant={(updates) => {
                 setTenants(prev => prev.map(t => 
                   t.id === currentUser.tenantId ? { ...t, ...updates } : t
@@ -988,12 +992,6 @@ function App() {
               onUpdateProductHighlight={updateProductHighlight}
               onDeleteProductHighlight={deleteProductHighlight}
             />
-          )}
-          {currentView === 'sales-team' && userPermissions.userManagement && (
-            <div>Sales Team Component</div>
-          )}
-          {currentView === 'numbering' && userPermissions.settings && (
-            <div>Document Numbering Component</div>
           )}
           
           {/* Custom Pages */}
