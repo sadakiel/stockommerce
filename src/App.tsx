@@ -926,6 +926,7 @@ function App() {
             />
           )}
           {currentView === 'settings' && userPermissions.settings && (
+          currentTenant ? (
             <Settings
               tenant={currentTenant!}
               documentNumberings={documentNumberings.filter(n => n.tenantId === currentUser.tenantId)}
@@ -938,6 +939,14 @@ function App() {
                 ));
               }}
             />
+          ) : (
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center">
+                <div className="text-gray-500 mb-2">Loading tenant configuration...</div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              </div>
+            </div>
+          )
           )}
           {currentView === 'documents' && userPermissions.documents && (
             <DocumentManager
