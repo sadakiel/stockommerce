@@ -3,6 +3,7 @@ export interface OrderStatus {
   status: 'pedido_realizado' | 'en_alistamiento' | 'confirmado_pago' | 'enviado' | 'con_transportador' | 'entregado';
   timestamp: string;
   notes?: string;
+  updatedBy?: string;
 }
 
 export interface OnlineOrder {

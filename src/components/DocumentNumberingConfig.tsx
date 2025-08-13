@@ -73,6 +73,10 @@ export function DocumentNumberingConfig({
   };
 
   const generateNextNumber = (numbering: DocumentNumbering) => {
+    if (numbering.type === 'support_ticket') {
+      const today = new Date().toISOString().split('T')[0];
+      return `TKT-${today}-${numbering.currentNumber.toString().padStart(4, '0')}`;
+    }
     return `${numbering.prefix}${numbering.currentNumber.toString().padStart(6, '0')}`;
   };
 

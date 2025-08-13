@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShoppingCart, Plus, Search, Filter, Grid, List, ChevronLeft, ChevronRight, Star, Tag } from 'lucide-react';
+import { ShoppingCart, Plus, Search, Filter, Grid, List, ChevronLeft, ChevronRight, Star, Tag, User, ChevronDown, Globe } from 'lucide-react';
 import { Product, Sale, Tenant } from '../App';
 import { Campaign, BannerSettings, ProductHighlight } from '../types/campaigns';
 import { useTranslation } from '../hooks/useTranslation';
@@ -33,6 +33,8 @@ export function PublicStore({ products, tenant, campaigns, bannerSettings, produ
     email: '',
     address: ''
   });
+  const [showCategoryMenu, setShowCategoryMenu] = useState(false);
+  const [showLanguageMenu, setShowLanguageMenu] = useState(false);
 
   // Auto-rotate campaigns
   React.useEffect(() => {
@@ -169,37 +171,45 @@ export function PublicStore({ products, tenant, campaigns, bannerSettings, produ
               </h1>
             </div>
             <div className="flex items-center space-x-4">
-              <select
-                value={language}
-                onChange={(e) => changeLanguage(e.target.value as 'es' | 'en')}
-                className="hidden"
-              >
-                <option value="es">🇪🇸 Español</option>
-                <option value="en">🇺🇸 English</option>
-              </select>
-              <div className="flex space-x-2">
+              <div className="relative">
                 <button
-                  onClick={() => changeLanguage('es')}
-                  className={`p-1 rounded-lg transition-colors ${
-                    language === 'es' 
-                      ? 'bg-blue-100 border-2 border-blue-500' 
-                      : 'border-2 border-gray-300 hover:border-gray-400'
-                  }`}
-                  title="Español"
+                  onClick={() => setShowLanguageMenu(!showLanguageMenu)}
+                  className="flex items-center space-x-2 px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                 >
-                  <span className="text-xl">🇨🇴</span>
+                  <Globe className="w-4 h-4 text-gray-600" />
+                  <span className="text-sm text-gray-700">
+                    {language === 'es' ? 'ES' : 'EN'}
+                  </span>
+                  <ChevronDown className="w-4 h-4 text-gray-600" />
                 </button>
-                <button
-                  onClick={() => changeLanguage('en')}
-                  className={`p-1 rounded-lg transition-colors ${
-                    language === 'en' 
-                      ? 'bg-blue-100 border-2 border-blue-500' 
-                      : 'border-2 border-gray-300 hover:border-gray-400'
-                  }`}
-                  title="English"
-                >
-                  <span className="text-xl">🇺🇸</span>
-                </button>
+                {showLanguageMenu && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                    <button
+                      onClick={() => {
+                        changeLanguage('es');
+                        setShowLanguageMenu(false);
+                      }}
+                      className={`w-full flex items-center space-x-3 px-4 py-3 text-left hover:bg-gray-50 ${
+                        language === 'es' ? 'bg-blue-50 text-blue-700' : ''
+                      }`}
+                    >
+                      <span className="text-xl">🇨🇴</span>
+                      <span>Español</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        changeLanguage('en');
+                        setShowLanguageMenu(false);
+                      }}
+                      className={`w-full flex items-center space-x-3 px-4 py-3 text-left hover:bg-gray-50 ${
+                        language === 'en' ? 'bg-blue-50 text-blue-700' : ''
+                      }`}
+                    >
+                      <span className="text-xl">🇺🇸</span>
+                      <span>English</span>
+                    </button>
+                  </div>
+                )}
               </div>
               <button
                 onClick={() => setShowCart(true)}
@@ -210,9 +220,12 @@ export function PublicStore({ products, tenant, campaigns, bannerSettings, produ
               </button>
               <button
                 onClick={onShowLogin}
-                className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+                className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors flex items-center space-x-2"
               >
-                {language === 'es' ? 'Iniciar Sesión' : 'Sign In'}
+                <User className="w-4 h-4" />
+                <span className="hidden sm:inline">
+                  {language === 'es' ? 'Iniciar Sesión' : 'Sign In'}
+                </span>
               </button>
             </div>
           </div>
@@ -296,50 +309,119 @@ export function PublicStore({ products, tenant, campaigns, bannerSettings, produ
 
       {/* Default Hero */}
       {(!bannerSettings.showBanner || activeCampaigns.length === 0) && (
-        <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-16">
+        <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 className="text-4xl font-bold mb-4">
+            <h2 className="text-5xl font-bold mb-6">
               {t('welcomeMessage')} {tenant.settings.storeName}
             </h2>
             <p className="text-xl opacity-90 mb-8">{t('bestProducts')}</p>
+            
+            {/* Centered Search */}
+            <div className="max-w-2xl mx-auto">
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-6 h-6" />
+                <input
+                  type="text"
+                  placeholder={language === 'es' ? 'Buscar productos...' : 'Search products...'}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-12 pr-6 py-4 text-gray-900 rounded-xl border-0 shadow-lg text-lg focus:ring-4 focus:ring-white focus:ring-opacity-50"
+                />
+              </div>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Categories Section - Grainger Style */}
+      {/* Categories Section - Dropdown Style */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('allCategories')}</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8">
-          <button
-            onClick={() => setSelectedCategory('')}
-            className={`p-4 rounded-lg border-2 transition-colors text-center ${
-              selectedCategory === '' 
-                ? 'border-blue-500 bg-blue-50 text-blue-700' 
-                : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-            }`}
+        <div className="flex flex-col md:flex-row gap-6 mb-8">
+          {/* Categories Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setShowCategoryMenu(!showCategoryMenu)}
+              className="flex items-center space-x-2 px-4 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors min-w-48"
+            >
+              <Tag className="w-5 h-5 text-gray-600" />
+              <span className="text-gray-700">
+                {selectedCategory || t('allCategories')}
+              </span>
+              <ChevronDown className="w-4 h-4 text-gray-600 ml-auto" />
+            </button>
+            {showCategoryMenu && (
+              <div className="absolute top-full left-0 mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto">
+                <button
+                  onClick={() => {
+                    setSelectedCategory('');
+                    setShowCategoryMenu(false);
+                  }}
+                  className={`w-full flex items-center justify-between px-4 py-3 text-left hover:bg-gray-50 ${
+                    selectedCategory === '' ? 'bg-blue-50 text-blue-700' : ''
+                  }`}
+                >
+                  <div className="flex items-center space-x-3">
+                    <Grid className="w-5 h-5 text-gray-600" />
+                    <span>{t('allCategories')}</span>
+                  </div>
+                  <span className="text-sm text-gray-500">
+                    {activeProducts.length}
+                  </span>
+                </button>
+                {categories.map(category => {
+                  const categoryProducts = activeProducts.filter(p => p.category === category);
+                  return (
+                    <button
+                      key={category}
+                      onClick={() => {
+                        setSelectedCategory(category);
+                        setShowCategoryMenu(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-4 py-3 text-left hover:bg-gray-50 ${
+                        selectedCategory === category ? 'bg-blue-50 text-blue-700' : ''
+                      }`}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <Tag className="w-5 h-5 text-gray-600" />
+                        <span>{category}</span>
+                      </div>
+                      <span className="text-sm text-gray-500">
+                        {categoryProducts.length}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Sort Options */}
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
           >
-            <Grid className="w-8 h-8 mx-auto mb-2 text-gray-600" />
-            <p className="text-sm font-medium">{t('allCategories')}</p>
-            <p className="text-xs text-gray-500">{activeProducts.length} {language === 'es' ? 'productos' : 'products'}</p>
-          </button>
-          {categories.map(category => {
-            const categoryProducts = activeProducts.filter(p => p.category === category);
-            return (
-              <button
-                key={category}
-                onClick={() => setSelectedCategory(category)}
-                className={`p-4 rounded-lg border-2 transition-colors text-center ${
-                  selectedCategory === category 
-                    ? 'border-blue-500 bg-blue-50 text-blue-700' 
-                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                }`}
-              >
-                <Tag className="w-8 h-8 mx-auto mb-2 text-gray-600" />
-                <p className="text-sm font-medium">{category}</p>
-                <p className="text-xs text-gray-500">{categoryProducts.length} {language === 'es' ? 'productos' : 'products'}</p>
-              </button>
-            );
-          })}
+            <option value="">{language === 'es' ? 'Ordenar por' : 'Sort by'}</option>
+            <option value="recent_offers">{t('recentOffers')}</option>
+            <option value="oldest_offers">{t('oldestOffers')}</option>
+            <option value="price_high_low">{t('priceHighToLow')}</option>
+            <option value="price_low_high">{t('priceLowToHigh')}</option>
+          </select>
+          
+          {/* View Mode Toggle */}
+          <div className="flex border border-gray-300 rounded-lg overflow-hidden bg-white">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`px-4 py-3 transition-colors ${viewMode === 'grid' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+            >
+              <Grid className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`px-4 py-3 transition-colors ${viewMode === 'list' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+            >
+              <List className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Highlighted Products */}
@@ -412,51 +494,6 @@ export function PublicStore({ products, tenant, campaigns, bannerSettings, produ
             </div>
           </div>
         )}
-
-        {/* Search and Filters */}
-        <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 mb-8">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type="text"
-                placeholder={language === 'es' ? 'Buscar productos...' : 'Search products...'}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg"
-              />
-            </div>
-            
-            <div className="flex flex-col sm:flex-row gap-3">
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="px-4 py-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">{language === 'es' ? 'Ordenar por' : 'Sort by'}</option>
-                <option value="recent_offers">{t('recentOffers')}</option>
-                <option value="oldest_offers">{t('oldestOffers')}</option>
-                <option value="price_high_low">{t('priceHighToLow')}</option>
-                <option value="price_low_high">{t('priceLowToHigh')}</option>
-              </select>
-              
-              <div className="flex border border-gray-300 rounded-lg overflow-hidden">
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={`px-4 py-4 transition-colors ${viewMode === 'grid' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
-                >
-                  <Grid className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={`px-4 py-4 transition-colors ${viewMode === 'list' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
-                >
-                  <List className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* Products Grid - Grainger Style */}
         <div className={`grid gap-4 ${

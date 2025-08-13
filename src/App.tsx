@@ -246,7 +246,7 @@ function App() {
         cost: 80.00,
         stock: 45,
         attributes: {},
-        active: true
+      prefix: 'TKT-' + new Date().toISOString().split('T')[0] + '-',
       }],
       taxes: [],
       tenantId: 'tenant1',
@@ -406,6 +406,56 @@ function App() {
       tenantId: currentUser?.tenantId || 'tenant1'
     };
     setSales(prev => [...prev, newSale]);
+    
+    // Create commission for POS sales
+    if (sale.type === 'pos' && salesTeam.length > 0) {
+      const randomSeller = salesTeam[Math.floor(Math.random() * salesTeam.length)];
+      const commission: Commission = {
+        id: Date.now().toString(),
+        userId: randomSeller.id,
+        userName: randomSeller.name,
+        saleId: newSale.id,
+        saleAmount: sale.total,
+        commissionRate: randomSeller.commissionRate,
+        commissionAmount: (sale.total * randomSeller.commissionRate) / 100,
+        date: new Date().toISOString(),
+        tenantId: currentUser?.tenantId || 'tenant1'
+      };
+      setCommissions(prev => [...prev, commission]);
+    }
+    
+    // Create order for tracking if it's an online sale
+    if (sale.type === 'online') {
+      const order: OnlineOrder = {
+        id: Date.now().toString(),
+        ticketCode: `TKT-${Date.now().toString().slice(-8)}`,
+        customer: {
+          name: sale.customer || 'Cliente Anónimo',
+          email: 'cliente@email.com',
+          phone: '+57 300 000 0000',
+          document: '00000000',
+          documentType: 'CC',
+          address: 'Dirección no especificada',
+          city: 'Ciudad'
+        },
+        products: sale.products,
+        total: sale.total,
+        currentStatus: 'pedido_realizado',
+        statusHistory: [{
+          id: '1',
+          status: 'pedido_realizado',
+          timestamp: new Date().toISOString(),
+          notes: `Pedido creado por ${currentUser?.name || 'Sistema'}`
+        }],
+        paymentMethod: 'card',
+        shippingAddress: 'Dirección de envío',
+        estimatedDelivery: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        tenantId: currentUser?.tenantId || 'tenant1',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      setOnlineOrders(prev => [...prev, order]);
+    }
     
     // Update inventory
     sale.products.forEach(({ product, quantity }) => {
@@ -660,7 +710,8 @@ function App() {
           id: Date.now().toString(),
           status,
           timestamp: new Date().toISOString(),
-          notes: notes || `Estado actualizado por ${currentUser?.name || 'Usuario'}`
+          notes: notes || `Estado actualizado por ${currentUser?.name || 'Usuario'}`,
+          updatedBy: currentUser?.name || 'Usuario'
         };
         return {
           ...order,
@@ -949,6 +1000,24 @@ function App() {
               </div>
             </div>
           )
+          )}
+          {currentView === 'sales-team' && userPermissions.userManagement && (
+            <SalesTeamManager
+              salesTeam={salesTeam.filter(s => s.tenantId === currentUser.tenantId)}
+              commissions={commissions.filter(c => c.tenantId === currentUser.tenantId)}
+              sales={tenantSales}
+              onCreateSeller={createSeller}
+              onUpdateSeller={updateSeller}
+              onDeleteSeller={deleteSeller}
+            />
+          )}
+          {currentView === 'numbering' && userPermissions.settings && (
+            <DocumentNumberingConfig
+              numberings={documentNumberings.filter(n => n.tenantId === currentUser.tenantId)}
+              onCreateNumbering={createDocumentNumbering}
+              onUpdateNumbering={updateDocumentNumbering}
+              onDeleteNumbering={deleteDocumentNumbering}
+            />
           )}
           {currentView === 'documents' && userPermissions.documents && (
             <DocumentManager

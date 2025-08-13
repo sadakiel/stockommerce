@@ -43,7 +43,8 @@ export function OrderTracking({ orders, recentSales, onUpdateOrderStatus, curren
 
   const confirmStatusUpdate = () => {
     if (editingStatus) {
-      onUpdateOrderStatus(editingStatus.orderId, editingStatus.status, statusNotes || `Estado actualizado por ${currentUser?.name || 'Usuario'}`);
+      const notes = statusNotes || `Estado actualizado por ${currentUser?.name || 'Usuario'}`;
+      onUpdateOrderStatus(editingStatus.orderId, editingStatus.status, notes);
       setEditingStatus(null);
       setStatusNotes('');
     }
@@ -291,6 +292,9 @@ export function OrderTracking({ orders, recentSales, onUpdateOrderStatus, curren
                           <p className="font-medium text-gray-900">{statusInfo.label}</p>
                           <p className="text-sm text-gray-500">
                             {new Date(status.timestamp).toLocaleString()}
+                          </p>
+                          <p className="text-xs text-blue-600 font-medium">
+                            Actualizado por: {currentUser?.name || 'Sistema'}
                           </p>
                           {status.notes && (
                             <p className="text-sm text-gray-600 mt-1">{status.notes}</p>

@@ -100,6 +100,9 @@ export function Settings({
                 onChange={(e) => setSettings({...settings, storeName: e.target.value})}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
+              <p className="text-xs text-gray-500 mt-1">
+                Este nombre aparece centrado junto al logo en la tienda
+              </p>
             </div>
 
             <div>
@@ -222,6 +225,11 @@ export function Settings({
                     <span className="text-2xl">🇨🇴</span>
                   </div>
                 </div>
+                <button className="w-full p-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors text-gray-600">
+                  <Plus className="w-5 h-5 mx-auto mb-2" />
+                  <p className="text-sm">Agregar Moneda Adicional</p>
+                  <p className="text-xs text-gray-500">Próximamente disponible</p>
+                </button>
                 <p className="text-xs text-gray-500">
                   💡 Para agregar monedas adicionales, contacta al administrador del sistema
                 </p>
