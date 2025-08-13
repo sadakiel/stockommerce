@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Camera, Save, Mail, Phone, MapPin, Shield, Upload, X } from 'lucide-react';
+import { User, Camera, Save, Mail, Phone, MapPin, Shield, Upload, X, ChevronRight } from 'lucide-react';
 
 interface UserProfileProps {
   user: any;
