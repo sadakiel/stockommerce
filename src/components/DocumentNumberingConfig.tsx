@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FileText, Hash, Save, Plus, Edit, Trash2 } from 'lucide-react';
+import { FileText, Hash, Save, Plus, Edit, Trash2, X } from 'lucide-react';
 import { DocumentNumbering } from '../types/sales';
 
 interface DocumentNumberingConfigProps {
