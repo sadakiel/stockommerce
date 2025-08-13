@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Save, Upload, Palette, Eye, Hash, Globe } from 'lucide-react';
+import { Save, Upload, Palette, Eye, Hash, Globe, Plus, CheckCircle } from 'lucide-react';
 import { Tenant } from '../App';
 import { DocumentNumberingConfig } from './DocumentNumberingConfig';
 import { useTranslation } from '../hooks/useTranslation';
