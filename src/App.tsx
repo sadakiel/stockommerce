@@ -1067,6 +1067,14 @@ function App() {
               onDeleteProductHighlight={deleteProductHighlight}
             />
           )}
+          {currentView === 'profile' && (
+            <UserProfile
+              user={currentUser}
+              onUpdateProfile={(updates) => {
+                setCurrentUser(prev => prev ? { ...prev, ...updates } : prev);
+              }}
+            />
+          )}
           
           {/* Custom Pages */}
           {isCustomPage && customPage && (
