@@ -664,7 +664,7 @@ export function Settings({
               <div>
                 <h4 className="font-semibold text-gray-900">{settings.storeName}</h4>
                 <p className="text-sm text-gray-500">
-                  Plan: <span className="capitalize font-medium">{tenant.plan}</span>
+                  Plan: <span className="capitalize font-medium">{tenant?.plan || 'No definido'}</span>
                 </p>
               </div>
             </div>
