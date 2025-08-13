@@ -1,6 +1,6 @@
-# ERP Multi-Cliente - Sistema de Gestión Empresarial
+# Stockommerce - Sistema de Gestión de Inventario y Ventas
 
-Un sistema ERP completo y listo para producción que permite gestionar inventarios, ventas online, POS local y múltiples clientes con configuraciones personalizables.
+Un sistema completo de gestión de inventario y ventas listo para producción que permite gestionar inventarios, ventas online, POS local, campañas publicitarias y múltiples clientes con configuraciones personalizables.
 
 ## 🚀 Características Principales
 
@@ -9,6 +9,8 @@ Un sistema ERP completo y listo para producción que permite gestionar inventari
 - **Inventario Unificado**: Control de stock sincronizado entre todos los canales
 - **Tienda Online**: E-commerce completo con carrito de compras
 - **POS Local**: Sistema de punto de venta para tiendas físicas
+- **Gestión de Campañas**: Banners publicitarios y productos destacados
+- **SSO Integration**: Acceso con Google, GitHub y Facebook
 - **Gestión de Clientes**: Administración multi-tenant con configuraciones personalizables
 - **Reportes Avanzados**: Análisis de ventas con exportación de datos
 - **Autenticación Segura**: Sistema de usuarios con roles y permisos
