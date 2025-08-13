@@ -776,7 +776,6 @@ export function Settings({
             </div>
           </div>
         </div>
-        </div>
       )}
     </div>
   );
