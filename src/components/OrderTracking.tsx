@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
-import { Package, Truck, CheckCircle, Clock, MapPin, Phone, Mail } from 'lucide-react';
+import { Package, Truck, CheckCircle, Clock, MapPin, Phone, Mail, User, Store, CreditCard } from 'lucide-react';
 import { OnlineOrder, OrderStatus } from '../types/orders';
+import { Sale } from '../App';
 
 interface OrderTrackingProps {
   orders: OnlineOrder[];
+  recentSales: Sale[];
   onUpdateOrderStatus: (orderId: string, status: OrderStatus['status'], notes?: string) => void;
 }
 
-export function OrderTracking({ orders, onUpdateOrderStatus }: OrderTrackingProps) {
+export function OrderTracking({ orders, recentSales, onUpdateOrderStatus }: OrderTrackingProps) {
   const [selectedOrder, setSelectedOrder] = useState<OnlineOrder | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -40,6 +42,50 @@ export function OrderTracking({ orders, onUpdateOrderStatus }: OrderTrackingProp
         </div>
       </div>
 
+      {/* Recent Sales Summary */}
+      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Últimas Ventas</h3>
+        <div className="space-y-3">
+          {recentSales.slice(0, 10).map((sale) => (
+            <div key={sale.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div className="flex items-center space-x-3">
+                <div className={`p-2 rounded-full ${
+                  sale.type === 'online' ? 'bg-purple-100' : 'bg-orange-100'
+                }`}>
+                  {sale.type === 'online' ? (
+                    <Store className={`w-4 h-4 ${sale.type === 'online' ? 'text-purple-600' : 'text-orange-600'}`} />
+                  ) : (
+                    <CreditCard className="w-4 h-4 text-orange-600" />
+                  )}
+                </div>
+                <div>
+                  <p className="font-medium text-gray-900">#{sale.id}</p>
+                  <p className="text-sm text-gray-500">
+                    {sale.products.map(p => p.product.name).join(', ')}
+                  </p>
+                  <div className="flex items-center space-x-4 text-xs text-gray-500">
+                    <span className="flex items-center space-x-1">
+                      <User className="w-3 h-3" />
+                      <span>{sale.customer || 'Cliente Anónimo'}</span>
+                    </span>
+                    <span className={`px-2 py-1 rounded-full ${
+                      sale.type === 'online' ? 'bg-purple-100 text-purple-800' : 'bg-orange-100 text-orange-800'
+                    }`}>
+                      {sale.type === 'online' ? 'Online' : 'POS'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="font-semibold text-gray-900">${sale.total.toLocaleString('es-CO')}</p>
+                <p className="text-xs text-gray-500">
+                  {new Date(sale.date).toLocaleDateString('es-CO')}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
       {/* Search */}
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
         <div className="relative">

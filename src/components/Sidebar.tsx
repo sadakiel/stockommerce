@@ -17,7 +17,8 @@ import {
   FileEdit,
   Warehouse,
   TrendingUp,
-  Megaphone
+  Megaphone,
+  Hash
 } from 'lucide-react';
 import { UserRole, rolePermissions } from '../types/roles';
 
@@ -56,6 +57,8 @@ export function Sidebar({
     { id: 'integrations', label: 'Integraciones', icon: MessageSquare, permission: permissions.integrations },
     { id: 'clients', label: 'Clientes', icon: Users, permission: permissions.clients },
     { id: 'pages', label: 'Páginas', icon: FileEdit, permission: permissions.settings },
+    { id: 'sales-team', label: 'Fuerza de Ventas', icon: TrendingUp, permission: permissions.userManagement },
+    { id: 'numbering', label: 'Numeración', icon: Hash, permission: permissions.settings },
     { id: 'users', label: 'Usuarios', icon: Users, permission: permissions.userManagement },
     { id: 'settings', label: 'Configuración', icon: Settings, permission: permissions.settings },
   ];

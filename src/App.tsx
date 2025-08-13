@@ -133,6 +133,8 @@ function App() {
     }
   ]);
   const [commissions, setCommissions] = useState<Commission[]>([]);
+  const [salesTeam, setSalesTeam] = useState<any[]>([]);
+  const [documentNumberings, setDocumentNumberings] = useState<any[]>([]);
 
   // Initialize default warehouses
   React.useEffect(() => {
@@ -677,6 +679,73 @@ function App() {
     setCustomers(prev => [...prev, newCustomer]);
   };
 
+  const createSeller = (seller: any) => {
+    const newSeller = {
+      ...seller,
+      id: Date.now().toString(),
+      tenantId: currentUser?.tenantId || 'tenant1',
+      created_at: new Date().toISOString()
+    };
+    setSalesTeam(prev => [...prev, newSeller]);
+  };
+
+  const updateSeller = (id: string, updates: any) => {
+    setSalesTeam(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
+  };
+
+  const deleteSeller = (id: string) => {
+    setSalesTeam(prev => prev.filter(s => s.id !== id));
+  };
+
+  const createDocumentNumbering = (numbering: any) => {
+    const newNumbering = {
+      ...numbering,
+      id: Date.now().toString(),
+      tenantId: currentUser?.tenantId || 'tenant1',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    setDocumentNumberings(prev => [...prev, newNumbering]);
+  };
+
+  const updateDocumentNumbering = (id: string, updates: any) => {
+    setDocumentNumberings(prev => prev.map(n => n.id === id ? { ...n, ...updates, updated_at: new Date().toISOString() } : n));
+  };
+
+  const deleteDocumentNumbering = (id: string) => {
+    setDocumentNumberings(prev => prev.filter(n => n.id !== id));
+  };
+
+  // Listen for inventory movement events from physical count
+  React.useEffect(() => {
+    const handleInventoryMovement = (event: any) => {
+      const { detail } = event;
+      const movement = {
+        id: Date.now().toString(),
+        type: detail.type,
+        productId: detail.productId,
+        toWarehouseId: detail.warehouseId,
+        quantity: detail.quantity,
+        reason: detail.reason,
+        userId: currentUser?.id || '1',
+        tenantId: currentUser?.tenantId || 'tenant1',
+        created_at: new Date().toISOString()
+      };
+      setInventoryMovements(prev => [...prev, movement]);
+      
+      // Update product stock
+      const product = products.find(p => p.id === detail.productId);
+      if (product) {
+        const newStock = detail.isPositive 
+          ? product.stock + detail.quantity 
+          : product.stock - detail.quantity;
+        updateProduct(detail.productId, { stock: Math.max(0, newStock) });
+      }
+    };
+
+    window.addEventListener('createInventoryMovement', handleInventoryMovement);
+    return () => window.removeEventListener('createInventoryMovement', handleInventoryMovement);
+  }, [currentUser, products]);
   // Show login modal if requested
   if (showLogin && !currentUser) {
     return <Login onLogin={handleLogin} onSSOLogin={handleSSOLogin} onBack={handleBackToStore} />;
@@ -814,6 +883,7 @@ function App() {
           {currentView === 'orders' && userPermissions.sales && (
             <OrderTracking
               orders={onlineOrders.filter(o => o.tenantId === currentUser.tenantId)}
+              recentSales={tenantSales.slice().reverse().slice(0, 20)}
               onUpdateOrderStatus={updateOrderStatus}
             />
           )}
@@ -918,6 +988,12 @@ function App() {
               onUpdateProductHighlight={updateProductHighlight}
               onDeleteProductHighlight={deleteProductHighlight}
             />
+          )}
+          {currentView === 'sales-team' && userPermissions.userManagement && (
+            <div>Sales Team Component</div>
+          )}
+          {currentView === 'numbering' && userPermissions.settings && (
+            <div>Document Numbering Component</div>
           )}
           
           {/* Custom Pages */}
