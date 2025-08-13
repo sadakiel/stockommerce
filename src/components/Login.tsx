@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import { Shield, Store, ArrowLeft } from 'lucide-react';
+import { Shield, Store, ArrowLeft, Chrome, Github, Facebook } from 'lucide-react';
 
 interface LoginProps {
   onLogin: (email: string, password: string) => void;
+  onSSOLogin: (provider: string) => void;
   onBack?: () => void;
 }
 
-export function Login({ onLogin, onBack }: LoginProps) {
+export function Login({ onLogin, onSSOLogin, onBack }: LoginProps) {
   const [email, setEmail] = useState('admin@techstore.com');
-  const [password, setPassword] = useState('admin123');
+  const [password, setPassword] = useState('stockommerce2024');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -20,6 +21,14 @@ export function Login({ onLogin, onBack }: LoginProps) {
       onLogin(email, password);
       setLoading(false);
     }, 1000);
+  };
+
+  const handleSSOLogin = (provider: string) => {
+    setLoading(true);
+    setTimeout(() => {
+      onSSOLogin(provider);
+      setLoading(false);
+    }, 1500);
   };
 
   return (
@@ -41,9 +50,9 @@ export function Login({ onLogin, onBack }: LoginProps) {
                 <Store className="w-8 h-8 text-blue-600" />
               </div>
             </div>
-            <h2 className="text-3xl font-bold text-gray-900">ERP Sistema</h2>
+            <h2 className="text-3xl font-bold text-gray-900">Stockommerce</h2>
             <p className="text-gray-600 mt-2">
-              Sistema Multi-Cliente de Gestión Empresarial
+              Sistema de Gestión de Inventario y Ventas
             </p>
           </div>
 
@@ -94,9 +103,45 @@ export function Login({ onLogin, onBack }: LoginProps) {
             </button>
           </form>
 
+          {/* SSO Options */}
+          <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">O continúa con</span>
+              </div>
+            </div>
+
+            <div className="mt-6 grid grid-cols-3 gap-3">
+              <button
+                onClick={() => handleSSOLogin('google')}
+                disabled={loading}
+                className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+              >
+                <Chrome className="w-5 h-5 text-red-500" />
+              </button>
+
+              <button
+                onClick={() => handleSSOLogin('github')}
+                disabled={loading}
+                className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+              >
+                <Github className="w-5 h-5 text-gray-900" />
+              <button
+                onClick={() => handleSSOLogin('facebook')}
+                disabled={loading}
+                className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+              >
+                <Facebook className="w-5 h-5 text-blue-600" />
+              </button>
+            </div>
+          </div>
+              </button>
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-500">
-              Demo: admin@techstore.com / admin123
+              Demo: admin@stockommerce.com / stockommerce2024
             </p>
             <p className="text-xs text-gray-400 mt-2">
               Usa estas credenciales para acceder al panel de administración

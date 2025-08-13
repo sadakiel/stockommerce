@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
-import { ShoppingCart, Plus, Minus, Search, Filter, User, LogIn } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, Search, Filter, User, LogIn, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Product, Sale, Tenant } from '../App';
+import { Campaign, BannerSettings, ProductHighlight } from '../types/campaigns';
 
 interface PublicStoreProps {
   products: Product[];
   tenant: Tenant;
+  campaigns: Campaign[];
+  bannerSettings: BannerSettings;
+  productHighlights: ProductHighlight[];
   onPurchase: (sale: Omit<Sale, 'id' | 'tenantId'>) => void;
   onShowLogin: () => void;
 }
@@ -14,16 +18,33 @@ interface CartItem {
   quantity: number;
 }
 
-export function PublicStore({ products, tenant, onPurchase, onShowLogin }: PublicStoreProps) {
+export function PublicStore({ products, tenant, campaigns, bannerSettings, productHighlights, onPurchase, onShowLogin }: PublicStoreProps) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [showCart, setShowCart] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [currentCampaignIndex, setCurrentCampaignIndex] = useState(0);
   const [customerInfo, setCustomerInfo] = useState({
     name: '',
     email: '',
     address: ''
   });
+
+  // Auto-rotate campaigns
+  React.useEffect(() => {
+    if (bannerSettings.autoRotate && campaigns.length > 1) {
+      const interval = setInterval(() => {
+        setCurrentCampaignIndex(prev => (prev + 1) % campaigns.length);
+      }, bannerSettings.rotationInterval * 1000);
+      return () => clearInterval(interval);
+    }
+  }, [bannerSettings.autoRotate, bannerSettings.rotationInterval, campaigns.length]);
+
+  const activeCampaigns = campaigns.filter(c => c.active).sort((a, b) => b.priority - a.priority);
+  const activeHighlights = productHighlights.filter(h => h.active);
+  const highlightedProducts = products.filter(p => 
+    activeHighlights.some(h => h.productId === p.id)
+  );
 
   const activeProducts = products.filter(p => p.active && p.stock > 0);
   const categories = [...new Set(activeProducts.map(p => p.category))];
@@ -69,6 +90,21 @@ export function PublicStore({ products, tenant, onPurchase, onShowLogin }: Publi
 
   const getTotalItems = () => cart.reduce((sum, item) => sum + item.quantity, 0);
   const getTotalPrice = () => cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+
+  const getProductHighlight = (productId: string) => {
+    return activeHighlights.find(h => h.productId === productId);
+  };
+
+  const getDiscountedPrice = (product: Product) => {
+    const highlight = getProductHighlight(product.id);
+    if (highlight?.specialPrice && highlight.specialPrice > 0) {
+      return highlight.specialPrice;
+    }
+    if (highlight?.discountPercentage && highlight.discountPercentage > 0) {
+      return product.price * (1 - highlight.discountPercentage / 100);
+    }
+    return product.price;
+  };
 
   const handlePurchase = () => {
     if (cart.length === 0 || !customerInfo.name || !customerInfo.email) return;
@@ -139,23 +175,179 @@ export function PublicStore({ products, tenant, onPurchase, onShowLogin }: Publi
       </header>
 
       {/* Hero Section */}
-      <div className={`bg-gradient-to-r ${themeColors[tenant.settings.theme]} text-white py-16`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-4xl font-bold mb-4">Bienvenido a {tenant.settings.storeName}</h2>
-          <p className="text-xl opacity-90 mb-8">Encuentra los mejores productos al mejor precio</p>
-          <div className="flex justify-center space-x-4 text-sm">
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-white rounded-full"></div>
-              <span>Envío gratis en compras mayores a $100</span>
+      {/* Campaign Banner */}
+      {bannerSettings.showBanner && activeCampaigns.length > 0 && (
+        <div className={`relative ${
+          bannerSettings.height === 'small' ? 'h-48' : 
+          bannerSettings.height === 'medium' ? 'h-64' : 'h-80'
+        } overflow-hidden`}>
+          {activeCampaigns.map((campaign, index) => (
+            <div
+              key={campaign.id}
+              className={`absolute inset-0 transition-opacity duration-1000 ${
+                index === currentCampaignIndex ? 'opacity-100' : 'opacity-0'
+              }`}
+              style={{
+                backgroundImage: `url(${campaign.imageUrl})`,
+                backgroundColor: campaign.backgroundColor,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center'
+              }}
+            >
+              <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+                <div className="text-center px-6" style={{ color: campaign.textColor }}>
+                  <h2 className="text-4xl font-bold mb-4">{campaign.title}</h2>
+                  {campaign.subtitle && (
+                    <p className="text-xl opacity-90 mb-8">{campaign.subtitle}</p>
+                  )}
+                  {campaign.buttonText && (
+                    <button className="bg-white text-gray-900 px-8 py-3 rounded-lg font-medium hover:bg-gray-100 transition-colors text-lg">
+                      {campaign.buttonText}
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-white rounded-full"></div>
-              <span>Garantía de satisfacción</span>
+          ))}
+          
+          {/* Navigation Arrows */}
+          {bannerSettings.showArrows && activeCampaigns.length > 1 && (
+            <>
+              <button
+                onClick={() => setCurrentCampaignIndex(prev => 
+                  prev === 0 ? activeCampaigns.length - 1 : prev - 1
+                )}
+                className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-80 hover:bg-opacity-100 p-2 rounded-full transition-all"
+              >
+                <ChevronLeft className="w-6 h-6 text-gray-800" />
+              </button>
+              <button
+                onClick={() => setCurrentCampaignIndex(prev => 
+                  (prev + 1) % activeCampaigns.length
+                )}
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-80 hover:bg-opacity-100 p-2 rounded-full transition-all"
+              >
+                <ChevronRight className="w-6 h-6 text-gray-800" />
+              </button>
+            </>
+          )}
+          
+          {/* Indicators */}
+          {bannerSettings.showIndicators && activeCampaigns.length > 1 && (
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+              {activeCampaigns.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentCampaignIndex(index)}
+                  className={`w-3 h-3 rounded-full transition-all ${
+                    index === currentCampaignIndex 
+                      ? 'bg-white' 
+                      : 'bg-white bg-opacity-50 hover:bg-opacity-75'
+                  }`}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Default Hero if no campaigns */}
+      {(!bannerSettings.showBanner || activeCampaigns.length === 0) && (
+        <div className={`bg-gradient-to-r ${themeColors[tenant.settings.theme]} text-white py-16`}>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 className="text-4xl font-bold mb-4">Bienvenido a {tenant.settings.storeName}</h2>
+            <p className="text-xl opacity-90 mb-8">Encuentra los mejores productos al mejor precio</p>
+            <div className="flex justify-center space-x-4 text-sm">
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-white rounded-full"></div>
+                <span>Envío gratis en compras mayores a $100</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-white rounded-full"></div>
+                <span>Garantía de satisfacción</span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
+      {/* Highlighted Products Section */}
+      {highlightedProducts.length > 0 && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <h2 className="text-3xl font-bold text-gray-900 text-center mb-8">Productos Destacados</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {highlightedProducts.map((product) => {
+              const highlight = getProductHighlight(product.id);
+              const discountedPrice = getDiscountedPrice(product);
+              const hasDiscount = discountedPrice < product.price;
+              
+              return (
+                <div key={product.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow group">
+                  <div className="relative overflow-hidden">
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    {highlight && (
+                      <div className="absolute top-2 left-2">
+                        <span 
+                          className="px-2 py-1 text-xs font-bold text-white rounded-full"
+                          style={{ backgroundColor: highlight.badgeColor }}
+                        >
+                          {highlight.badgeText}
+                        </span>
+                      </div>
+                    )}
+                    {hasDiscount && (
+                      <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold">
+                        -{Math.round(((product.price - discountedPrice) / product.price) * 100)}%
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-4">
+                    <h3 className="font-semibold text-gray-900 mb-2">
+                      {highlight?.title || product.name}
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                      {highlight?.description || product.description}
+                    </p>
+                    <div className="flex justify-between items-center mb-3">
+                      <div>
+                        {hasDiscount ? (
+                          <div className="flex items-center space-x-2">
+                            <span className="text-lg font-bold text-red-600">
+                              {tenant.settings.currency === 'USD' ? '$' : tenant.settings.currency} {discountedPrice.toFixed(2)}
+                            </span>
+                            <span className="text-sm text-gray-500 line-through">
+                              ${product.price.toFixed(2)}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-2xl font-bold text-gray-900">
+                            {tenant.settings.currency === 'USD' ? '$' : tenant.settings.currency} {product.price.toFixed(2)}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                        {product.category}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => addToCart(product)}
+                      disabled={product.stock === 0}
+                      className={`w-full ${buttonColors[tenant.settings.theme]} disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-2 rounded-lg transition-colors flex items-center justify-center space-x-2`}
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>Agregar al Carrito</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
       {/* Search and Filters */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-8">
@@ -189,27 +381,55 @@ export function PublicStore({ products, tenant, onPurchase, onShowLogin }: Publi
         {/* Products Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredProducts.map((product) => (
-            <div key={product.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow group">
+            <div key={product.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow group relative">
               <div className="relative overflow-hidden">
                 <img
                   src={product.image}
                   alt={product.name}
                   className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                 />
-                <div className="absolute top-2 right-2 bg-white px-2 py-1 rounded-full text-sm font-medium text-gray-600">
-                  {product.stock} disponibles
-                </div>
+                {getProductHighlight(product.id) && (
+                  <div className="absolute top-2 left-2">
+                    <span 
+                      className="px-2 py-1 text-xs font-bold text-white rounded-full"
+                      style={{ backgroundColor: getProductHighlight(product.id)?.badgeColor }}
+                    >
+                      {getProductHighlight(product.id)?.badgeText}
+                    </span>
+                  </div>
+                )}
+                {getDiscountedPrice(product) < product.price && (
+                  <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold">
+                    -{Math.round(((product.price - getDiscountedPrice(product)) / product.price) * 100)}%
+                  </div>
+                )}
               </div>
               <div className="p-4">
                 <h3 className="font-semibold text-gray-900 mb-2">{product.name}</h3>
                 <p className="text-sm text-gray-600 mb-3 line-clamp-2">{product.description}</p>
                 <div className="flex justify-between items-center mb-3">
-                  <span className="text-2xl font-bold text-gray-900">
-                    {tenant.settings.currency === 'USD' ? '$' : tenant.settings.currency} {product.price.toFixed(2)}
-                  </span>
+                  <div>
+                    {getDiscountedPrice(product) < product.price ? (
+                      <div className="flex items-center space-x-2">
+                        <span className="text-lg font-bold text-red-600">
+                          {tenant.settings.currency === 'USD' ? '$' : tenant.settings.currency} {getDiscountedPrice(product).toFixed(2)}
+                        </span>
+                        <span className="text-sm text-gray-500 line-through">
+                          ${product.price.toFixed(2)}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-2xl font-bold text-gray-900">
+                        {tenant.settings.currency === 'USD' ? '$' : tenant.settings.currency} {product.price.toFixed(2)}
+                      </span>
+                    )}
+                  </div>
                   <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
                     {product.category}
                   </span>
+                </div>
+                <div className="text-xs text-gray-500 mb-3">
+                  {product.stock} disponibles
                 </div>
                 <button
                   onClick={() => addToCart(product)}

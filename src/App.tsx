@@ -19,11 +19,13 @@ import { DocumentManager } from './components/DocumentManager';
 import { QuoteManager } from './components/QuoteManager';
 import { IntegrationsManager } from './components/IntegrationsManager';
 import { UserManagement } from './components/UserManagement';
+import { CampaignManager } from './components/CampaignManager';
 import { EnhancedProduct, TaxType } from './types/product';
 import { DianConfiguration } from './types/dian';
 import { DocumentTemplate, GeneratedDocument, WhatsAppIntegration, SocialMediaIntegration } from './types/documents';
 import { CustomPage, DashboardWidget, Warehouse, InventoryMovement, PhysicalCount } from './types/pages';
 import { UserRole, rolePermissions, UserWithRole, CustomUserRole } from './types/roles';
+import { Campaign, BannerSettings, ProductHighlight } from './types/campaigns';
 
 export interface User {
   id: string;
@@ -87,6 +89,22 @@ function App() {
   const [socialConfigs, setSocialConfigs] = useState<SocialMediaIntegration[]>([]);
   const [systemUsers, setSystemUsers] = useState<UserWithRole[]>([]);
   const [customRoles, setCustomRoles] = useState<CustomUserRole[]>([]);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [bannerSettings, setBannerSettings] = useState<BannerSettings>({
+    id: '1',
+    tenantId: 'tenant1',
+    showBanner: true,
+    autoRotate: true,
+    rotationInterval: 5,
+    height: 'medium',
+    position: 'hero',
+    showIndicators: true,
+    showArrows: true,
+    animationType: 'fade',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  });
+  const [productHighlights, setProductHighlights] = useState<ProductHighlight[]>([]);
 
   // Initialize default warehouses
   React.useEffect(() => {
@@ -234,16 +252,16 @@ function App() {
   const [tenants, setTenants] = useState<Tenant[]>([
     {
       id: 'tenant1',
-      name: 'TechStore Pro',
+      name: 'Stockommerce',
       plan: 'pro',
       settings: {
-        storeName: 'TechStore Pro',
+        storeName: 'Stockommerce',
         currency: 'USD',
         theme: 'blue',
         logo: 'https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg?auto=compress&cs=tinysrgb&w=100',
-        address: '123 Tech Street, Ciudad Tech',
+        address: '123 Commerce Street, Ciudad Comercial',
         phone: '+1 234 567 8900',
-        email: 'info@techstore.com'
+        email: 'info@stockommerce.com'
       },
       active: true
     }
@@ -257,7 +275,20 @@ function App() {
       email: email,
       role: 'admin',
       tenantId: 'tenant1',
-      tenantName: 'TechStore Pro'
+      tenantName: 'Stockommerce'
+    };
+    setCurrentUser(user);
+  };
+
+  const handleSSOLogin = (provider: string) => {
+    // Mock SSO authentication
+    const user: User = {
+      id: '1',
+      name: `Usuario ${provider}`,
+      email: `user@${provider}.com`,
+      role: 'admin',
+      tenantId: 'tenant1',
+      tenantName: 'Stockommerce'
     };
     setCurrentUser(user);
   };
@@ -539,20 +570,65 @@ function App() {
     return URL.createObjectURL(file);
   };
 
+  const createCampaign = (campaign: Omit<Campaign, 'id' | 'tenantId' | 'created_at' | 'updated_at'>) => {
+    const newCampaign: Campaign = {
+      ...campaign,
+      id: Date.now().toString(),
+      tenantId: currentUser?.tenantId || 'tenant1',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    setCampaigns(prev => [...prev, newCampaign]);
+  };
+
+  const updateCampaign = (id: string, updates: Partial<Campaign>) => {
+    setCampaigns(prev => prev.map(c => c.id === id ? { ...c, ...updates, updated_at: new Date().toISOString() } : c));
+  };
+
+  const deleteCampaign = (id: string) => {
+    setCampaigns(prev => prev.filter(c => c.id !== id));
+  };
+
+  const updateBannerSettings = (updates: Partial<BannerSettings>) => {
+    setBannerSettings(prev => ({ ...prev, ...updates, updated_at: new Date().toISOString() }));
+  };
+
+  const createProductHighlight = (highlight: Omit<ProductHighlight, 'id' | 'tenantId'>) => {
+    const newHighlight: ProductHighlight = {
+      ...highlight,
+      id: Date.now().toString(),
+      tenantId: currentUser?.tenantId || 'tenant1'
+    };
+    setProductHighlights(prev => [...prev, newHighlight]);
+  };
+
+  const updateProductHighlight = (id: string, updates: Partial<ProductHighlight>) => {
+    setProductHighlights(prev => prev.map(h => h.id === id ? { ...h, ...updates } : h));
+  };
+
+  const deleteProductHighlight = (id: string) => {
+    setProductHighlights(prev => prev.filter(h => h.id !== id));
+  };
+
   // Show login modal if requested
   if (showLogin && !currentUser) {
-    return <Login onLogin={handleLogin} onBack={handleBackToStore} />;
+    return <Login onLogin={handleLogin} onSSOLogin={handleSSOLogin} onBack={handleBackToStore} />;
   }
 
   // Show public store if no user is logged in
   if (!currentUser) {
     const currentTenant = tenants[0]; // Default to first tenant for public store
     const tenantProducts = products.filter(p => p.tenantId === currentTenant.id);
+    const tenantCampaigns = campaigns.filter(c => c.tenantId === currentTenant.id);
+    const tenantHighlights = productHighlights.filter(h => h.tenantId === currentTenant.id);
     
     return (
       <PublicStore 
         products={tenantProducts}
         tenant={currentTenant}
+        campaigns={tenantCampaigns}
+        bannerSettings={bannerSettings}
+        productHighlights={tenantHighlights}
         onPurchase={addSale}
         onShowLogin={handleShowLogin}
       />
@@ -754,6 +830,21 @@ function App() {
               onCreateRole={createRole}
               onUpdateRole={updateRole}
               onDeleteRole={deleteRole}
+            />
+          )}
+          {currentView === 'campaigns' && userPermissions.settings && (
+            <CampaignManager
+              campaigns={campaigns.filter(c => c.tenantId === currentUser.tenantId)}
+              bannerSettings={bannerSettings}
+              productHighlights={productHighlights.filter(h => h.tenantId === currentUser.tenantId)}
+              products={tenantProducts}
+              onCreateCampaign={createCampaign}
+              onUpdateCampaign={updateCampaign}
+              onDeleteCampaign={deleteCampaign}
+              onUpdateBannerSettings={updateBannerSettings}
+              onCreateProductHighlight={createProductHighlight}
+              onUpdateProductHighlight={updateProductHighlight}
+              onDeleteProductHighlight={deleteProductHighlight}
             />
           )}
           

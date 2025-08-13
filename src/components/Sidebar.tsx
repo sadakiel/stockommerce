@@ -16,7 +16,8 @@ import {
   ChevronRight,
   FileEdit,
   Warehouse,
-  TrendingUp
+  TrendingUp,
+  Megaphone
 } from 'lucide-react';
 import { UserRole, rolePermissions } from '../types/roles';
 
@@ -50,6 +51,7 @@ export function Sidebar({
     { id: 'documents', label: 'Documentos', icon: FileText, permission: permissions.documents },
     { id: 'taxes', label: 'Impuestos', icon: Calculator, permission: permissions.taxes },
     { id: 'dian', label: 'DIAN', icon: Building2, permission: permissions.dian },
+    { id: 'campaigns', label: 'Campañas', icon: Megaphone, permission: permissions.settings },
     { id: 'integrations', label: 'Integraciones', icon: MessageSquare, permission: permissions.integrations },
     { id: 'clients', label: 'Clientes', icon: Users, permission: permissions.clients },
     { id: 'pages', label: 'Páginas', icon: FileEdit, permission: permissions.settings },
