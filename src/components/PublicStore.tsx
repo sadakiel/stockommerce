@@ -180,25 +180,25 @@ export function PublicStore({ products, tenant, campaigns, bannerSettings, produ
               <div className="flex space-x-2">
                 <button
                   onClick={() => changeLanguage('es')}
-                  className={`p-2 rounded-lg transition-colors ${
+                  className={`p-1 rounded-lg transition-colors ${
                     language === 'es' 
                       ? 'bg-blue-100 border-2 border-blue-500' 
                       : 'border-2 border-gray-300 hover:border-gray-400'
                   }`}
                   title="Español"
                 >
-                  <span className="text-2xl">🇨🇴</span>
+                  <span className="text-xl">🇨🇴</span>
                 </button>
                 <button
                   onClick={() => changeLanguage('en')}
-                  className={`p-2 rounded-lg transition-colors ${
+                  className={`p-1 rounded-lg transition-colors ${
                     language === 'en' 
                       ? 'bg-blue-100 border-2 border-blue-500' 
                       : 'border-2 border-gray-300 hover:border-gray-400'
                   }`}
                   title="English"
                 >
-                  <span className="text-2xl">🇺🇸</span>
+                  <span className="text-xl">🇺🇸</span>
                 </button>
               </div>
               <button

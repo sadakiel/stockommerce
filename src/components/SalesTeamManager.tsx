@@ -243,16 +243,18 @@ export function SalesTeamManager({
                 <div className="flex justify-between">
                   <span className="text-gray-500">Ventas hoy:</span>
                   <span className="font-semibold">
-                    {todayCommissions.filter(c => c.userId === seller.id).length}
+                    {commissions.filter(c => c.userId === seller.id && 
+                      new Date(c.date).toDateString() === new Date().toDateString()).length}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Comisiones hoy:</span>
                   <span className="font-semibold text-green-600">
-                    ${todayCommissions
+                    ${commissions
                       .filter(c => c.userId === seller.id)
+                      .filter(c => new Date(c.date).toDateString() === new Date().toDateString())
                       .reduce((sum, c) => sum + c.commissionAmount, 0)
-                      .toLocaleString('es-CO')}
+                      .toFixed(2)}
                   </span>
                 </div>
               </div>

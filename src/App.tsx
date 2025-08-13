@@ -21,6 +21,8 @@ import { IntegrationsManager } from './components/IntegrationsManager';
 import { UserManagement } from './components/UserManagement';
 import { CampaignManager } from './components/CampaignManager';
 import { PhysicalInventory } from './components/PhysicalInventory';
+import { SalesTeamManager } from './components/SalesTeamManager';
+import { DocumentNumberingConfig } from './components/DocumentNumberingConfig';
 import { EnhancedProduct, TaxType } from './types/product';
 import { DianConfiguration } from './types/dian';
 import { DocumentTemplate, GeneratedDocument, WhatsAppIntegration, SocialMediaIntegration } from './types/documents';
