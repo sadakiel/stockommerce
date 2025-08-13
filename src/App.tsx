@@ -27,6 +27,9 @@ import { DocumentTemplate, GeneratedDocument, WhatsAppIntegration, SocialMediaIn
 import { CustomPage, DashboardWidget, Warehouse, InventoryMovement, PhysicalCount } from './types/pages';
 import { UserRole, rolePermissions, UserWithRole, CustomUserRole } from './types/roles';
 import { Campaign, BannerSettings, ProductHighlight } from './types/campaigns';
+import { OnlineOrder, CustomerInfo, OrderStatus, Commission } from './types/orders';
+import { OrderTracking } from './components/OrderTracking';
+import { CustomerSearch } from './components/CustomerSearch';
 
 export interface User {
   id: string;
@@ -106,6 +109,30 @@ function App() {
     updated_at: new Date().toISOString()
   });
   const [productHighlights, setProductHighlights] = useState<ProductHighlight[]>([]);
+  const [onlineOrders, setOnlineOrders] = useState<OnlineOrder[]>([]);
+  const [customers, setCustomers] = useState<CustomerInfo[]>([
+    {
+      id: '1',
+      name: 'Juan Pérez',
+      email: 'juan.perez@email.com',
+      phone: '+57 300 123 4567',
+      document: '12345678',
+      documentType: 'CC',
+      address: 'Calle 123 #45-67',
+      city: 'Bogotá'
+    },
+    {
+      id: '2',
+      name: 'María García',
+      email: 'maria.garcia@email.com',
+      phone: '+57 301 987 6543',
+      document: '87654321',
+      documentType: 'CC',
+      address: 'Carrera 45 #12-34',
+      city: 'Medellín'
+    }
+  ]);
+  const [commissions, setCommissions] = useState<Commission[]>([]);
 
   // Initialize default warehouses
   React.useEffect(() => {
@@ -611,6 +638,45 @@ function App() {
     setProductHighlights(prev => prev.filter(h => h.id !== id));
   };
 
+  const createOnlineOrder = (order: Omit<OnlineOrder, 'id' | 'tenantId' | 'created_at' | 'updated_at'>) => {
+    const newOrder: OnlineOrder = {
+      ...order,
+      id: Date.now().toString(),
+      tenantId: currentUser?.tenantId || 'tenant1',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    setOnlineOrders(prev => [...prev, newOrder]);
+  };
+
+  const updateOrderStatus = (orderId: string, status: OrderStatus['status'], notes?: string) => {
+    setOnlineOrders(prev => prev.map(order => {
+      if (order.id === orderId) {
+        const newStatusEntry: OrderStatus = {
+          id: Date.now().toString(),
+          status,
+          timestamp: new Date().toISOString(),
+          notes
+        };
+        return {
+          ...order,
+          currentStatus: status,
+          statusHistory: [...order.statusHistory, newStatusEntry],
+          updated_at: new Date().toISOString()
+        };
+      }
+      return order;
+    }));
+  };
+
+  const createCustomer = (customer: CustomerInfo) => {
+    const newCustomer: CustomerInfo = {
+      ...customer,
+      id: Date.now().toString()
+    };
+    setCustomers(prev => [...prev, newCustomer]);
+  };
+
   // Show login modal if requested
   if (showLogin && !currentUser) {
     return <Login onLogin={handleLogin} onSSOLogin={handleSSOLogin} onBack={handleBackToStore} />;
@@ -680,21 +746,13 @@ function App() {
         {/* Main Content */}
         <main className="flex-1 p-6 overflow-y-auto">
           {currentView === 'dashboard' && userPermissions.dashboard && (
-            <CustomizableDashboard
-              widgets={dashboardWidgets}
-              onUpdateWidgets={setDashboardWidgets}
-              salesData={{
-                online: tenantSales.filter(s => s.type === 'online').length,
-                pos: tenantSales.filter(s => s.type === 'pos').length,
-                onlineRevenue: tenantSales.filter(s => s.type === 'online').reduce((sum, s) => sum + s.total, 0).toFixed(2),
-                posRevenue: tenantSales.filter(s => s.type === 'pos').reduce((sum, s) => sum + s.total, 0).toFixed(2)
-              }}
-              productsData={{
-                lowStock: tenantProducts.filter(p => p.stock < 10)
-              }}
-              revenueData={{
-                total: tenantSales.reduce((sum, s) => sum + s.total, 0).toFixed(2)
-              }}
+            <Dashboard
+              user={currentUser}
+              products={tenantProducts}
+              sales={tenantSales}
+              tenant={currentTenant!}
+              quotes={quotes.filter(q => q.tenantId === currentUser.tenantId)}
+              commissions={commissions.filter(c => c.tenantId === currentUser.tenantId)}
             />
           )}
           {currentView === 'inventory' && userPermissions.inventory && (
@@ -738,6 +796,9 @@ function App() {
               products={tenantProducts}
               tenant={currentTenant!}
               onPurchase={addSale}
+              onCreateOrder={createOnlineOrder}
+              customers={customers}
+              onCreateCustomer={createCustomer}
             />
           )}
           {currentView === 'pos' && userPermissions.pos && (
@@ -746,6 +807,14 @@ function App() {
               onSale={addSale}
               tenantSettings={currentTenant?.settings}
               currentUser={currentUser}
+              customers={customers}
+              onCreateCustomer={createCustomer}
+            />
+          )}
+          {currentView === 'orders' && userPermissions.sales && (
+            <OrderTracking
+              orders={onlineOrders.filter(o => o.tenantId === currentUser.tenantId)}
+              onUpdateOrderStatus={updateOrderStatus}
             />
           )}
           {currentView === 'reports' && userPermissions.reports && (
@@ -811,6 +880,8 @@ function App() {
               onCreateQuote={addQuote}
               onUpdateQuote={updateQuote}
               onSendQuote={sendQuoteEmail}
+              customers={customers}
+              onCreateCustomer={createCustomer}
             />
           )}
           {currentView === 'integrations' && userPermissions.integrations && (

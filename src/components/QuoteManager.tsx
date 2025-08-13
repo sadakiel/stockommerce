@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Plus, Mail, FileText, Eye, Edit, Send } from 'lucide-react';
 import { Product } from '../App';
+import { CustomerSearch } from './CustomerSearch';
+import { CustomerInfo } from '../types/orders';
 
 interface Quote {
   id: string;
@@ -25,12 +27,15 @@ interface QuoteManagerProps {
   onCreateQuote: (quote: Omit<Quote, 'id' | 'tenantId' | 'created_at'>) => void;
   onUpdateQuote: (id: string, updates: Partial<Quote>) => void;
   onSendQuote: (quoteId: string, email: string) => void;
+  customers: CustomerInfo[];
+  onCreateCustomer: (customer: CustomerInfo) => void;
 }
 
-export function QuoteManager({ products, quotes, onCreateQuote, onUpdateQuote, onSendQuote }: QuoteManagerProps) {
+export function QuoteManager({ products, quotes, onCreateQuote, onUpdateQuote, onSendQuote, customers, onCreateCustomer }: QuoteManagerProps) {
   const [showModal, setShowModal] = useState(false);
   const [editingQuote, setEditingQuote] = useState<Quote | null>(null);
   const [selectedProducts, setSelectedProducts] = useState<{ product: Product; quantity: number; price: number }[]>([]);
+  const [selectedCustomer, setSelectedCustomer] = useState<CustomerInfo | null>(null);
   
   const [quoteForm, setQuoteForm] = useState({
     number: `COT-${Date.now()}`,
@@ -246,6 +251,46 @@ export function QuoteManager({ products, quotes, onCreateQuote, onUpdateQuote, o
             
             <div className="p-6 space-y-6">
               {/* Customer Info */}
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Cliente
+                  </label>
+                  <CustomerSearch
+                    customers={customers}
+                    onSelectCustomer={(customer) => {
+                      setSelectedCustomer(customer);
+                      setQuoteForm({
+                        ...quoteForm,
+                        customerName: customer.name,
+                        customerEmail: customer.email,
+                        customerPhone: customer.phone
+                      });
+                    }}
+                    onCreateCustomer={(customer) => {
+                      onCreateCustomer(customer);
+                      setSelectedCustomer(customer);
+                      setQuoteForm({
+                        ...quoteForm,
+                        customerName: customer.name,
+                        customerEmail: customer.email,
+                        customerPhone: customer.phone
+                      });
+                    }}
+                    selectedCustomer={selectedCustomer}
+                    onClearCustomer={() => {
+                      setSelectedCustomer(null);
+                      setQuoteForm({
+                        ...quoteForm,
+                        customerName: '',
+                        customerEmail: '',
+                        customerPhone: ''
+                      });
+                    }}
+                  />
+                </div>
+              </div>
+              
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -268,6 +313,7 @@ export function QuoteManager({ products, quotes, onCreateQuote, onUpdateQuote, o
                     value={quoteForm.customerName}
                     onChange={(e) => setQuoteForm({...quoteForm, customerName: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    disabled={!!selectedCustomer}
                   />
                 </div>
                 
@@ -294,6 +340,7 @@ export function QuoteManager({ products, quotes, onCreateQuote, onUpdateQuote, o
                     value={quoteForm.customerEmail}
                     onChange={(e) => setQuoteForm({...quoteForm, customerEmail: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    disabled={!!selectedCustomer}
                   />
                 </div>
                 
@@ -306,6 +353,7 @@ export function QuoteManager({ products, quotes, onCreateQuote, onUpdateQuote, o
                     value={quoteForm.customerPhone}
                     onChange={(e) => setQuoteForm({...quoteForm, customerPhone: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    disabled={!!selectedCustomer}
                   />
                 </div>
               </div>

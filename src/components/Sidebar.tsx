@@ -45,6 +45,7 @@ export function Sidebar({
     { id: 'inventory', label: 'Inventario', icon: Warehouse, permission: permissions.inventory },
     { id: 'products', label: 'Productos', icon: Package, permission: permissions.products },
     { id: 'sales', label: 'Ventas Online', icon: Store, permission: permissions.sales },
+    { id: 'orders', label: 'Seguimiento Pedidos', icon: TrendingUp, permission: permissions.sales },
     { id: 'pos', label: 'POS Local', icon: CreditCard, permission: permissions.pos },
     { id: 'quotes', label: 'Cotizaciones', icon: FileEdit, permission: permissions.quotes },
     { id: 'reports', label: 'Reportes', icon: BarChart3, permission: permissions.reports },

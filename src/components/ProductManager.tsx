@@ -359,29 +359,44 @@ export function ProductManager({ products, taxes, currency, onAddProduct, onUpda
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Precio Base ({currencySymbol}) *
+                          Precio Base *
                         </label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          required
-                          value={formData.basePrice}
-                          onChange={(e) => setFormData({...formData, basePrice: parseFloat(e.target.value)})}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        />
+                        <div className="flex">
+                          <select
+                            value={currency}
+                            className="px-3 py-2 border border-gray-300 rounded-l-lg bg-gray-50 text-gray-700 border-r-0"
+                          >
+                            <option value="USD">USD ($)</option>
+                            <option value="EUR">EUR (€)</option>
+                            <option value="COP">COP ($)</option>
+                          </select>
+                          <input
+                            type="number"
+                            step="0.01"
+                            required
+                            value={formData.basePrice}
+                            onChange={(e) => setFormData({...formData, basePrice: parseFloat(e.target.value)})}
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-r-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                        </div>
                       </div>
                       
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Costo Base ({currencySymbol})
+                          Costo Base
                         </label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          value={formData.baseCost}
-                          onChange={(e) => setFormData({...formData, baseCost: parseFloat(e.target.value)})}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        />
+                        <div className="flex">
+                          <span className="px-3 py-2 border border-gray-300 rounded-l-lg bg-gray-50 text-gray-700 border-r-0">
+                            {currencySymbol}
+                          </span>
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={formData.baseCost}
+                            onChange={(e) => setFormData({...formData, baseCost: parseFloat(e.target.value)})}
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-r-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                        </div>
                       </div>
                       
                       <div>
@@ -444,6 +459,40 @@ export function ProductManager({ products, taxes, currency, onAddProduct, onUpda
                         </div>
                       </div>
                     </div>
+
+                    {/* Stock Information (Read-only) */}
+                    <div className="border-t pt-6">
+                      <h4 className="text-lg font-medium text-gray-900 mb-4">Información de Inventario</h4>
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Stock Total</label>
+                            <div className="px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-700">
+                              {formData.variants.reduce((sum, v) => sum + v.stock, 0)} unidades
+                            </div>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Valor en Inventario</label>
+                            <div className="px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-700">
+                              {currencySymbol}{(formData.variants.reduce((sum, v) => sum + (v.cost * v.stock), 0)).toFixed(2)}
+                            </div>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+                            <div className={`px-3 py-2 rounded-lg text-center text-sm font-medium ${
+                              formData.variants.reduce((sum, v) => sum + v.stock, 0) < 10 
+                                ? 'bg-red-100 text-red-800' 
+                                : 'bg-green-100 text-green-800'
+                            }`}>
+                              {formData.variants.reduce((sum, v) => sum + v.stock, 0) < 10 ? 'Stock Bajo' : 'Stock Normal'}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="mt-3 text-xs text-gray-500">
+                          <p>💡 Para modificar el stock, usa la sección de "Inventario Avanzado"</p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
 
@@ -470,7 +519,7 @@ export function ProductManager({ products, taxes, currency, onAddProduct, onUpda
                         <input
                           type="number"
                           step="0.01"
-                          placeholder={`Precio (${currencySymbol})`}
+                          placeholder="Precio"
                           value={newVariant.price}
                           onChange={(e) => setNewVariant({...newVariant, price: parseFloat(e.target.value)})}
                           className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -478,7 +527,7 @@ export function ProductManager({ products, taxes, currency, onAddProduct, onUpda
                         <input
                           type="number"
                           step="0.01"
-                          placeholder={`Costo (${currencySymbol})`}
+                          placeholder="Costo"
                           value={newVariant.cost}
                           onChange={(e) => setNewVariant({...newVariant, cost: parseFloat(e.target.value)})}
                           className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -651,6 +700,7 @@ export function ProductManager({ products, taxes, currency, onAddProduct, onUpda
                 </button>
                 <button
                   type="submit"
+                  disabled={formData.variants.reduce((sum, v) => sum + v.stock, 0) > 0 && !editingProduct}
                   className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
                 >
                   <Save className="w-4 h-4" />

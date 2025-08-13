@@ -2,12 +2,16 @@ import React, { useState } from 'react';
 import { Search, ShoppingCart, Trash2, Calculator, CreditCard, User, Mail, Printer, FileText, X, Plus, Minus } from 'lucide-react';
 import { Product, Sale } from '../App';
 import { POSCustomer, POSPayment, POSSale, POSItem, POSTax, POSTicket } from '../types/pos';
+import { CustomerSearch } from './CustomerSearch';
+import { CustomerInfo } from '../types/orders';
 
 interface POSProps {
   products: Product[];
   onSale: (sale: Omit<Sale, 'id' | 'tenantId'>) => void;
   tenantSettings: any;
   currentUser: any;
+  customers: CustomerInfo[];
+  onCreateCustomer: (customer: CustomerInfo) => void;
 }
 
 interface CartItem {
@@ -16,7 +20,7 @@ interface CartItem {
   discount: number;
 }
 
-export function POS({ products, onSale, tenantSettings, currentUser }: POSProps) {
+export function POS({ products, onSale, tenantSettings, currentUser, customers, onCreateCustomer }: POSProps) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [customer, setCustomer] = useState<POSCustomer | null>(null);
@@ -316,13 +320,33 @@ export function POS({ products, onSale, tenantSettings, currentUser }: POSProps)
               </div>
             </div>
           ) : (
-            <button
-              onClick={() => setShowCustomerModal(true)}
-              className="w-full p-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors flex items-center justify-center space-x-2"
-            >
-              <User className="w-5 h-5 text-gray-400" />
-              <span className="text-gray-600">Agregar Cliente</span>
-            </button>
+            <div>
+              <CustomerSearch
+                customers={customers}
+                onSelectCustomer={(customerInfo) => {
+                  const posCustomer: POSCustomer = {
+                    ...customerInfo,
+                    requiresInvoice: false
+                  };
+                  setCustomer(posCustomer);
+                }}
+                onCreateCustomer={(customerInfo) => {
+                  onCreateCustomer(customerInfo);
+                  const posCustomer: POSCustomer = {
+                    ...customerInfo,
+                    requiresInvoice: false
+                  };
+                  setCustomer(posCustomer);
+                }}
+              />
+              <button
+                onClick={() => setShowCustomerModal(true)}
+                className="w-full mt-2 p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center space-x-2 text-sm"
+              >
+                <User className="w-4 h-4 text-gray-400" />
+                <span className="text-gray-600">O crear cliente rápido</span>
+              </button>
+            </div>
           )}
         </div>
 

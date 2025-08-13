@@ -1,11 +1,16 @@
 import React, { useState } from 'react';
 import { ShoppingCart, Plus, Minus, Search, Filter } from 'lucide-react';
 import { Product, Sale, Tenant } from '../App';
+import { CustomerSearch } from './CustomerSearch';
+import { OnlineOrder, CustomerInfo, OrderStatus } from '../types/orders';
 
 interface OnlineStoreProps {
   products: Product[];
   tenant: Tenant;
   onPurchase: (sale: Omit<Sale, 'id' | 'tenantId'>) => void;
+  onCreateOrder: (order: Omit<OnlineOrder, 'id' | 'tenantId' | 'created_at' | 'updated_at'>) => void;
+  customers: CustomerInfo[];
+  onCreateCustomer: (customer: CustomerInfo) => void;
 }
 
 interface CartItem {
@@ -13,7 +18,7 @@ interface CartItem {
   quantity: number;
 }
 
-export function OnlineStore({ products, tenant, onPurchase }: OnlineStoreProps) {
+export function OnlineStore({ products, tenant, onPurchase, onCreateOrder, customers, onCreateCustomer }: OnlineStoreProps) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [showCart, setShowCart] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -23,6 +28,8 @@ export function OnlineStore({ products, tenant, onPurchase }: OnlineStoreProps) 
     email: '',
     address: ''
   });
+  const [selectedCustomer, setSelectedCustomer] = useState<CustomerInfo | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'transfer' | 'cash_on_delivery'>('card');
 
   const activeProducts = products.filter(p => p.active && p.stock > 0);
   const categories = [...new Set(activeProducts.map(p => p.category))];
@@ -70,21 +77,56 @@ export function OnlineStore({ products, tenant, onPurchase }: OnlineStoreProps) 
   const getTotalPrice = () => cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
 
   const handlePurchase = () => {
-    if (cart.length === 0 || !customerInfo.name || !customerInfo.email) return;
+    if (cart.length === 0 || (!selectedCustomer && (!customerInfo.name || !customerInfo.email))) return;
 
+    const customer = selectedCustomer || {
+      name: customerInfo.name,
+      email: customerInfo.email,
+      phone: '',
+      document: '',
+      documentType: 'CC' as const,
+      address: customerInfo.address,
+      city: ''
+    };
+
+    // Generate ticket code
+    const ticketCode = `TKT-${Date.now().toString().slice(-8)}`;
+
+    // Create order with tracking
+    const order: Omit<OnlineOrder, 'id' | 'tenantId' | 'created_at' | 'updated_at'> = {
+      ticketCode,
+      customer,
+      products: cart,
+      total: getTotalPrice(),
+      currentStatus: 'pedido_realizado',
+      statusHistory: [{
+        id: '1',
+        status: 'pedido_realizado',
+        timestamp: new Date().toISOString(),
+        notes: 'Pedido creado desde tienda online'
+      }],
+      paymentMethod,
+      shippingAddress: customer.address,
+      estimatedDelivery: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+    };
+
+    onCreateOrder(order);
+
+    // Legacy sale for compatibility
     const sale: Omit<Sale, 'id' | 'tenantId'> = {
       products: cart,
       total: getTotalPrice(),
       date: new Date().toISOString(),
       type: 'online',
-      customer: customerInfo.name
+      customer: customer.name
     };
 
     onPurchase(sale);
     setCart([]);
     setShowCart(false);
     setCustomerInfo({ name: '', email: '', address: '' });
-    alert('¡Compra realizada exitosamente!');
+    setSelectedCustomer(null);
+    alert(`¡Pedido creado exitosamente! Código de seguimiento: ${ticketCode}`);
   };
 
   return (
@@ -226,29 +268,53 @@ export function OnlineStore({ products, tenant, onPurchase }: OnlineStoreProps) 
 
                 <div className="space-y-4 mb-6">
                   <h4 className="font-semibold">Información del Cliente</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <input
-                      type="text"
-                      placeholder="Nombre completo"
-                      value={customerInfo.name}
-                      onChange={(e) => setCustomerInfo({...customerInfo, name: e.target.value})}
-                      className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                    <input
-                      type="email"
-                      placeholder="Email"
-                      value={customerInfo.email}
-                      onChange={(e) => setCustomerInfo({...customerInfo, email: e.target.value})}
-                      className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
+                  <CustomerSearch
+                    customers={customers}
+                    onSelectCustomer={setSelectedCustomer}
+                    onCreateCustomer={onCreateCustomer}
+                    selectedCustomer={selectedCustomer}
+                    onClearCustomer={() => setSelectedCustomer(null)}
+                  />
+                  
+                  {!selectedCustomer && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <input
+                        type="text"
+                        placeholder="Nombre completo"
+                        value={customerInfo.name}
+                        onChange={(e) => setCustomerInfo({...customerInfo, name: e.target.value})}
+                        className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                      <input
+                        type="email"
+                        placeholder="Email"
+                        value={customerInfo.email}
+                        onChange={(e) => setCustomerInfo({...customerInfo, email: e.target.value})}
+                        className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+                  )}
+                  
                   <input
                     type="text"
                     placeholder="Dirección de entrega"
-                    value={customerInfo.address}
+                    value={selectedCustomer?.address || customerInfo.address}
                     onChange={(e) => setCustomerInfo({...customerInfo, address: e.target.value})}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Método de Pago</label>
+                    <select
+                      value={paymentMethod}
+                      onChange={(e) => setPaymentMethod(e.target.value as any)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="card">Tarjeta de Crédito/Débito</option>
+                      <option value="transfer">Transferencia Bancaria</option>
+                      <option value="cash_on_delivery">Pago Contra Entrega</option>
+                    </select>
+                  </div>
                 </div>
 
                 <div className="flex space-x-3">
@@ -260,7 +326,7 @@ export function OnlineStore({ products, tenant, onPurchase }: OnlineStoreProps) 
                   </button>
                   <button
                     onClick={handlePurchase}
-                    disabled={!customerInfo.name || !customerInfo.email}
+                    disabled={!selectedCustomer && (!customerInfo.name || !customerInfo.email)}
                     className="flex-1 bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                   >
                     Finalizar Compra

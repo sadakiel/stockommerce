@@ -1,21 +1,29 @@
 import React from 'react';
-import { TrendingUp, Package, ShoppingCart, Users, DollarSign, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { TrendingUp, Package, ShoppingCart, Users, DollarSign, ArrowUpRight, ArrowDownRight, FileText, Eye, Phone, Mail } from 'lucide-react';
 import { User, Product, Sale, Tenant } from '../App';
+import { Commission } from '../types/orders';
 
 interface DashboardProps {
   user: User;
   products: Product[];
   sales: Sale[];
   tenant: Tenant;
+  quotes?: any[];
+  commissions?: Commission[];
 }
 
-export function Dashboard({ user, products, sales, tenant }: DashboardProps) {
+export function Dashboard({ user, products, sales, tenant, quotes = [], commissions = [] }: DashboardProps) {
   const totalRevenue = sales.reduce((sum, sale) => sum + sale.total, 0);
   const totalOrders = sales.length;
   const activeProducts = products.filter(p => p.active).length;
   const lowStockProducts = products.filter(p => p.stock < 10).length;
 
   const recentSales = sales.slice(-5).reverse();
+  const recentQuotes = quotes.slice(-5).reverse();
+  const todayCommissions = commissions.filter(c => {
+    const today = new Date().toDateString();
+    return new Date(c.date).toDateString() === today;
+  });
 
   const stats = [
     {
@@ -103,6 +111,52 @@ export function Dashboard({ user, products, sales, tenant }: DashboardProps) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Recent Quotes */}
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Cotizaciones Recientes</h3>
+            <FileText className="w-5 h-5 text-gray-400" />
+          </div>
+          <div className="space-y-4">
+            {recentQuotes.length > 0 ? (
+              recentQuotes.map((quote) => (
+                <div key={quote.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div>
+                    <p className="font-medium text-gray-900">{quote.number}</p>
+                    <p className="text-sm text-gray-500">{quote.customerName}</p>
+                    <div className="flex items-center space-x-4 mt-1">
+                      <div className="flex items-center space-x-1">
+                        <Phone className="w-3 h-3 text-gray-400" />
+                        <span className="text-xs text-gray-500">{quote.customerPhone}</span>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <Mail className="w-3 h-3 text-gray-400" />
+                        <span className="text-xs text-gray-500">{quote.customerEmail}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold text-gray-900">${quote.total.toFixed(2)}</p>
+                    <span className={`px-2 py-1 text-xs rounded-full ${
+                      quote.status === 'accepted' ? 'bg-green-100 text-green-800' :
+                      quote.status === 'sent' ? 'bg-blue-100 text-blue-800' :
+                      quote.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {quote.status === 'accepted' ? 'Aceptada' :
+                       quote.status === 'sent' ? 'Enviada' :
+                       quote.status === 'rejected' ? 'Rechazada' :
+                       'Borrador'}
+                    </span>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-gray-500 text-center py-8">No hay cotizaciones recientes</p>
+            )}
+          </div>
+        </div>
+
         {/* Recent Sales */}
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Ventas Recientes</h3>
@@ -133,6 +187,51 @@ export function Dashboard({ user, products, sales, tenant }: DashboardProps) {
               ))
             ) : (
               <p className="text-gray-500 text-center py-8">No hay ventas recientes</p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Sales Team Commissions */}
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Comisiones del Día</h3>
+          <div className="space-y-4">
+            {todayCommissions.length > 0 ? (
+              <>
+                <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium text-green-900">Total Comisiones Hoy:</span>
+                    <span className="text-xl font-bold text-green-600">
+                      ${todayCommissions.reduce((sum, c) => sum + c.commissionAmount, 0).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+                
+                {todayCommissions.map((commission) => (
+                  <div key={commission.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                    <div>
+                      <p className="font-medium text-gray-900">{commission.userName}</p>
+                      <p className="text-sm text-gray-500">
+                        Venta #{commission.saleId} - {commission.commissionRate}%
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold text-green-600">
+                        ${commission.commissionAmount.toFixed(2)}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        de ${commission.saleAmount.toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </>
+            ) : (
+              <div className="text-center py-8">
+                <DollarSign className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                <p className="text-gray-500">No hay comisiones registradas hoy</p>
+              </div>
             )}
           </div>
         </div>

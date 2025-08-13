@@ -1,6 +1,28 @@
 import React, { useState } from 'react';
-import { BarChart3, TrendingUp, Download, Calendar, DollarSign } from 'lucide-react';
+import { BarChart3, TrendingUp, Download, Calendar, DollarSign, FileText, Settings } from 'lucide-react';
 import { Sale, Product } from '../App';
+import jsPDF from 'jspdf';
+import { Line } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 interface ReportsProps {
   sales: Sale[];
@@ -9,6 +31,13 @@ interface ReportsProps {
 
 export function Reports({ sales, products }: ReportsProps) {
   const [dateRange, setDateRange] = useState('month');
+  const [showChartConfig, setShowChartConfig] = useState(false);
+  const [chartConfig, setChartConfig] = useState({
+    type: 'sales',
+    period: 'daily',
+    productId: '',
+    showTrend: true
+  });
   
   const now = new Date();
   const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -85,6 +114,89 @@ export function Reports({ sales, products }: ReportsProps) {
     URL.revokeObjectURL(url);
   };
 
+  const exportToPDF = () => {
+    const pdf = new jsPDF();
+    
+    // Header
+    pdf.setFontSize(20);
+    pdf.text('Reporte de Ventas', 20, 30);
+    
+    pdf.setFontSize(12);
+    pdf.text(`Período: ${dateRange}`, 20, 45);
+    pdf.text(`Fecha de generación: ${new Date().toLocaleDateString()}`, 20, 55);
+    
+    // Summary
+    pdf.setFontSize(14);
+    pdf.text('Resumen:', 20, 75);
+    
+    pdf.setFontSize(10);
+    pdf.text(`Total de ventas: ${filteredSales.length}`, 20, 90);
+    pdf.text(`Ingresos totales: $${totalRevenue.toFixed(2)}`, 20, 100);
+    pdf.text(`Ventas online: ${onlineSales.length} ($${onlineRevenue.toFixed(2)})`, 20, 110);
+    pdf.text(`Ventas POS: ${posSales.length} ($${posRevenue.toFixed(2)})`, 20, 120);
+    
+    // Top Products
+    pdf.setFontSize(14);
+    pdf.text('Productos Más Vendidos:', 20, 140);
+    
+    pdf.setFontSize(10);
+    topProducts.slice(0, 10).forEach((item, index) => {
+      const y = 155 + (index * 10);
+      pdf.text(`${index + 1}. ${item.product.name}: ${item.quantity} unidades - $${item.revenue.toFixed(2)}`, 20, y);
+    });
+    
+    pdf.save(`reporte-ventas-${dateRange}-${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
+  const generateChartData = () => {
+    const days = 30;
+    const labels = [];
+    const data = [];
+    
+    for (let i = days - 1; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      labels.push(date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' }));
+      
+      const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      const dayEnd = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
+      
+      if (chartConfig.type === 'sales') {
+        const daySales = sales.filter(sale => {
+          const saleDate = new Date(sale.date);
+          return saleDate >= dayStart && saleDate < dayEnd;
+        });
+        data.push(daySales.reduce((sum, sale) => sum + sale.total, 0));
+      } else if (chartConfig.type === 'product' && chartConfig.productId) {
+        const productSales = sales.filter(sale => {
+          const saleDate = new Date(sale.date);
+          return saleDate >= dayStart && saleDate < dayEnd && 
+                 sale.products.some(p => p.product.id === chartConfig.productId);
+        });
+        const quantity = productSales.reduce((sum, sale) => {
+          return sum + sale.products
+            .filter(p => p.product.id === chartConfig.productId)
+            .reduce((pSum, p) => pSum + p.quantity, 0);
+        }, 0);
+        data.push(quantity);
+      }
+    }
+    
+    return {
+      labels,
+      datasets: [
+        {
+          label: chartConfig.type === 'sales' ? 'Ventas ($)' : 'Cantidad Vendida',
+          data,
+          borderColor: 'rgb(59, 130, 246)',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          tension: 0.4,
+          fill: true
+        }
+      ]
+    };
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -105,10 +217,24 @@ export function Reports({ sales, products }: ReportsProps) {
           </select>
           <button
             onClick={exportReport}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
           >
             <Download className="w-5 h-5" />
-            <span>Exportar</span>
+            <span>JSON</span>
+          </button>
+          <button
+            onClick={exportToPDF}
+            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center space-x-2"
+          >
+            <FileText className="w-5 h-5" />
+            <span>PDF</span>
+          </button>
+          <button
+            onClick={() => setShowChartConfig(true)}
+            className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-2"
+          >
+            <Settings className="w-5 h-5" />
+            <span>Gráficos</span>
           </button>
         </div>
       </div>
@@ -167,6 +293,36 @@ export function Reports({ sales, products }: ReportsProps) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Custom Chart */}
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            Gráfico Personalizable - {chartConfig.type === 'sales' ? 'Ventas' : 'Producto'}
+          </h3>
+          <div className="h-64">
+            <Line 
+              data={generateChartData()}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    position: 'top' as const,
+                  },
+                  title: {
+                    display: true,
+                    text: `Tendencia de ${chartConfig.type === 'sales' ? 'Ventas' : 'Producto'} - Últimos 30 días`
+                  }
+                },
+                scales: {
+                  y: {
+                    beginAtZero: true
+                  }
+                }
+              }}
+            />
+          </div>
+        </div>
+
         {/* Sales Chart */}
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Ventas por Canal</h3>
@@ -287,6 +443,72 @@ export function Reports({ sales, products }: ReportsProps) {
           </table>
         </div>
       </div>
+
+      {/* Chart Configuration Modal */}
+      {showChartConfig && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md">
+            <h3 className="text-xl font-semibold mb-4">Configurar Gráfico</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de Gráfico</label>
+                <select
+                  value={chartConfig.type}
+                  onChange={(e) => setChartConfig({...chartConfig, type: e.target.value as any})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="sales">Ventas Totales</option>
+                  <option value="product">Producto Específico</option>
+                </select>
+              </div>
+              
+              {chartConfig.type === 'product' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Producto</label>
+                  <select
+                    value={chartConfig.productId}
+                    onChange={(e) => setChartConfig({...chartConfig, productId: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">Seleccionar producto</option>
+                    {products.map(product => (
+                      <option key={product.id} value={product.id}>{product.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Período</label>
+                <select
+                  value={chartConfig.period}
+                  onChange={(e) => setChartConfig({...chartConfig, period: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="daily">Diario</option>
+                  <option value="weekly">Semanal</option>
+                  <option value="monthly">Mensual</option>
+                </select>
+              </div>
+            </div>
+            
+            <div className="flex space-x-3 mt-6">
+              <button
+                onClick={() => setShowChartConfig(false)}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Cerrar
+              </button>
+              <button
+                onClick={() => setShowChartConfig(false)}
+                className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+              >
+                Aplicar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
