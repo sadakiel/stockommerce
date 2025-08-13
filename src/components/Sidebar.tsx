@@ -95,14 +95,17 @@ export function Sidebar({
               onClick={() => setCurrentView(item.id)}
               className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors ${
                 isActive
-                  ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                  ? 'bg-blue-600 text-white shadow-md'
                   : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
               }`}
               title={isCollapsed ? item.label : undefined}
             >
-              <Icon className="w-5 h-5 flex-shrink-0" />
+              <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-white' : ''}`} />
               {!isCollapsed && (
-                <span className="font-medium">{item.label}</span>
+                <span className={`font-medium ${isActive ? 'text-white' : ''}`}>{item.label}</span>
+              )}
+              {isActive && (
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-400 rounded-r"></div>
               )}
             </button>
           );

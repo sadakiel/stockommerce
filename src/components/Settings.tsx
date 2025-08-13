@@ -25,10 +25,10 @@ export function Settings({ tenant, onUpdateTenant }: SettingsProps) {
   ];
 
   const currencies = [
+    { code: 'COP', name: 'Peso Colombiano', symbol: '$' },
     { code: 'USD', name: 'Dólar Estadounidense', symbol: '$' },
     { code: 'EUR', name: 'Euro', symbol: '€' },
     { code: 'GBP', name: 'Libra Esterlina', symbol: '£' },
-    { code: 'COP', name: 'Peso Colombiano', symbol: '$' },
     { code: 'MXN', name: 'Peso Mexicano', symbol: '$' }
   ];
 

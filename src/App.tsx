@@ -284,7 +284,7 @@ function App() {
       plan: 'pro',
       settings: {
         storeName: 'Stockommerce',
-        currency: 'USD',
+        currency: 'COP',
         theme: 'blue',
         logo: 'https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg?auto=compress&cs=tinysrgb&w=100',
         address: '123 Commerce Street, Ciudad Comercial',

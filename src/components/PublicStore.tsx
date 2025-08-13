@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { ShoppingCart, Plus, Minus, Search, Filter, User, LogIn, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ShoppingCart, Plus, Search, Filter, Grid, List, ChevronLeft, ChevronRight, Star, Tag } from 'lucide-react';
 import { Product, Sale, Tenant } from '../App';
 import { Campaign, BannerSettings, ProductHighlight } from '../types/campaigns';
+import { useTranslation } from '../hooks/useTranslation';
 
 interface PublicStoreProps {
   products: Product[];
@@ -19,10 +20,13 @@ interface CartItem {
 }
 
 export function PublicStore({ products, tenant, campaigns, bannerSettings, productHighlights, onPurchase, onShowLogin }: PublicStoreProps) {
+  const { t, language, changeLanguage } = useTranslation();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [showCart, setShowCart] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [sortBy, setSortBy] = useState('');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [currentCampaignIndex, setCurrentCampaignIndex] = useState(0);
   const [customerInfo, setCustomerInfo] = useState({
     name: '',
@@ -49,10 +53,46 @@ export function PublicStore({ products, tenant, campaigns, bannerSettings, produ
   const activeProducts = products.filter(p => p.active && p.stock > 0);
   const categories = [...new Set(activeProducts.map(p => p.category))];
 
+  const getProductHighlight = (productId: string) => {
+    return activeHighlights.find(h => h.productId === productId);
+  };
+
+  const getDiscountedPrice = (product: Product) => {
+    const highlight = getProductHighlight(product.id);
+    if (highlight?.specialPrice && highlight.specialPrice > 0) {
+      return highlight.specialPrice;
+    }
+    if (highlight?.discountPercentage && highlight.discountPercentage > 0) {
+      return product.price * (1 - highlight.discountPercentage / 100);
+    }
+    return product.price;
+  };
+
   const filteredProducts = activeProducts.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = !selectedCategory || product.category === selectedCategory;
     return matchesSearch && matchesCategory;
+  }).sort((a, b) => {
+    switch (sortBy) {
+      case 'recent_offers':
+        const aHighlight = getProductHighlight(a.id);
+        const bHighlight = getProductHighlight(b.id);
+        if (aHighlight && !bHighlight) return -1;
+        if (!aHighlight && bHighlight) return 1;
+        return 0;
+      case 'oldest_offers':
+        const aHighlightOld = getProductHighlight(a.id);
+        const bHighlightOld = getProductHighlight(b.id);
+        if (aHighlightOld && !bHighlightOld) return 1;
+        if (!aHighlightOld && bHighlightOld) return -1;
+        return 0;
+      case 'price_high_low':
+        return getDiscountedPrice(b) - getDiscountedPrice(a);
+      case 'price_low_high':
+        return getDiscountedPrice(a) - getDiscountedPrice(b);
+      default:
+        return 0;
+    }
   });
 
   const addToCart = (product: Product) => {
@@ -87,30 +127,14 @@ export function PublicStore({ products, tenant, campaigns, bannerSettings, produ
   };
 
   const clearCart = () => setCart([]);
-
   const getTotalItems = () => cart.reduce((sum, item) => sum + item.quantity, 0);
-  const getTotalPrice = () => cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
-
-  const getProductHighlight = (productId: string) => {
-    return activeHighlights.find(h => h.productId === productId);
-  };
-
-  const getDiscountedPrice = (product: Product) => {
-    const highlight = getProductHighlight(product.id);
-    if (highlight?.specialPrice && highlight.specialPrice > 0) {
-      return highlight.specialPrice;
-    }
-    if (highlight?.discountPercentage && highlight.discountPercentage > 0) {
-      return product.price * (1 - highlight.discountPercentage / 100);
-    }
-    return product.price;
-  };
+  const getTotalPrice = () => cart.reduce((sum, item) => sum + (getDiscountedPrice(item.product) * item.quantity), 0);
 
   const handlePurchase = () => {
     if (cart.length === 0 || !customerInfo.name || !customerInfo.email) return;
 
     const sale: Omit<Sale, 'id' | 'tenantId'> = {
-      products: cart,
+      products: cart.map(item => ({ product: item.product, quantity: item.quantity })),
       total: getTotalPrice(),
       date: new Date().toISOString(),
       type: 'online',
@@ -121,21 +145,11 @@ export function PublicStore({ products, tenant, campaigns, bannerSettings, produ
     setCart([]);
     setShowCart(false);
     setCustomerInfo({ name: '', email: '', address: '' });
-    alert('¡Compra realizada exitosamente!');
+    alert(t('orderCreatedSuccessfully') || '¡Compra realizada exitosamente!');
   };
 
-  const themeColors = {
-    blue: 'from-blue-600 to-blue-800',
-    green: 'from-green-600 to-green-800',
-    purple: 'from-purple-600 to-purple-800',
-    red: 'from-red-600 to-red-800'
-  };
-
-  const buttonColors = {
-    blue: 'bg-blue-600 hover:bg-blue-700',
-    green: 'bg-green-600 hover:bg-green-700',
-    purple: 'bg-purple-600 hover:bg-purple-700',
-    red: 'bg-red-600 hover:bg-red-700'
+  const formatPrice = (price: number) => {
+    return `$${price.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} COP`;
   };
 
   return (
@@ -155,26 +169,32 @@ export function PublicStore({ products, tenant, campaigns, bannerSettings, produ
               </h1>
             </div>
             <div className="flex items-center space-x-4">
+              <select
+                value={language}
+                onChange={(e) => changeLanguage(e.target.value as 'es' | 'en')}
+                className="px-3 py-1 border border-gray-300 rounded text-sm"
+              >
+                <option value="es">🇪🇸 Español</option>
+                <option value="en">🇺🇸 English</option>
+              </select>
               <button
                 onClick={() => setShowCart(true)}
-                className={`${buttonColors[tenant.settings.theme]} text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2`}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
               >
                 <ShoppingCart className="w-5 h-5" />
-                <span>Carrito ({getTotalItems()})</span>
+                <span>{t('cart')} ({getTotalItems()})</span>
               </button>
               <button
                 onClick={onShowLogin}
-                className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors flex items-center space-x-2"
+                className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
               >
-                <LogIn className="w-5 h-5" />
-                <span>Iniciar Sesión</span>
+                {language === 'es' ? 'Iniciar Sesión' : 'Sign In'}
               </button>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Hero Section */}
       {/* Campaign Banner */}
       {bannerSettings.showBanner && activeCampaigns.length > 0 && (
         <div className={`relative ${
@@ -210,7 +230,7 @@ export function PublicStore({ products, tenant, campaigns, bannerSettings, produ
             </div>
           ))}
           
-          {/* Navigation Arrows */}
+          {/* Navigation */}
           {bannerSettings.showArrows && activeCampaigns.length > 1 && (
             <>
               <button
@@ -232,7 +252,6 @@ export function PublicStore({ products, tenant, campaigns, bannerSettings, produ
             </>
           )}
           
-          {/* Indicators */}
           {bannerSettings.showIndicators && activeCampaigns.length > 1 && (
             <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
               {activeCampaigns.map((_, index) => (
@@ -251,203 +270,315 @@ export function PublicStore({ products, tenant, campaigns, bannerSettings, produ
         </div>
       )}
 
-      {/* Default Hero if no campaigns */}
+      {/* Default Hero */}
       {(!bannerSettings.showBanner || activeCampaigns.length === 0) && (
-        <div className={`bg-gradient-to-r ${themeColors[tenant.settings.theme]} text-white py-16`}>
+        <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 className="text-4xl font-bold mb-4">Bienvenido a {tenant.settings.storeName}</h2>
-            <p className="text-xl opacity-90 mb-8">Encuentra los mejores productos al mejor precio</p>
-            <div className="flex justify-center space-x-4 text-sm">
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-white rounded-full"></div>
-                <span>Envío gratis en compras mayores a $100</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-white rounded-full"></div>
-                <span>Garantía de satisfacción</span>
-              </div>
-            </div>
+            <h2 className="text-4xl font-bold mb-4">
+              {t('welcomeMessage')} {tenant.settings.storeName}
+            </h2>
+            <p className="text-xl opacity-90 mb-8">{t('bestProducts')}</p>
           </div>
         </div>
       )}
 
-      {/* Highlighted Products Section */}
-      {highlightedProducts.length > 0 && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <h2 className="text-3xl font-bold text-gray-900 text-center mb-8">Productos Destacados</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {highlightedProducts.map((product) => {
-              const highlight = getProductHighlight(product.id);
-              const discountedPrice = getDiscountedPrice(product);
-              const hasDiscount = discountedPrice < product.price;
-              
-              return (
-                <div key={product.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow group">
-                  <div className="relative overflow-hidden">
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                    {highlight && (
-                      <div className="absolute top-2 left-2">
-                        <span 
-                          className="px-2 py-1 text-xs font-bold text-white rounded-full"
-                          style={{ backgroundColor: highlight.badgeColor }}
-                        >
-                          {highlight.badgeText}
-                        </span>
-                      </div>
-                    )}
-                    {hasDiscount && (
-                      <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold">
-                        -{Math.round(((product.price - discountedPrice) / product.price) * 100)}%
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-semibold text-gray-900 mb-2">
-                      {highlight?.title || product.name}
-                    </h3>
-                    <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                      {highlight?.description || product.description}
-                    </p>
-                    <div className="flex justify-between items-center mb-3">
-                      <div>
+      {/* Categories Section - Grainger Style */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('allCategories')}</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8">
+          <button
+            onClick={() => setSelectedCategory('')}
+            className={`p-4 rounded-lg border-2 transition-colors text-center ${
+              selectedCategory === '' 
+                ? 'border-blue-500 bg-blue-50 text-blue-700' 
+                : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+            }`}
+          >
+            <Grid className="w-8 h-8 mx-auto mb-2 text-gray-600" />
+            <p className="text-sm font-medium">{t('allCategories')}</p>
+            <p className="text-xs text-gray-500">{activeProducts.length} {language === 'es' ? 'productos' : 'products'}</p>
+          </button>
+          {categories.map(category => {
+            const categoryProducts = activeProducts.filter(p => p.category === category);
+            return (
+              <button
+                key={category}
+                onClick={() => setSelectedCategory(category)}
+                className={`p-4 rounded-lg border-2 transition-colors text-center ${
+                  selectedCategory === category 
+                    ? 'border-blue-500 bg-blue-50 text-blue-700' 
+                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                <Tag className="w-8 h-8 mx-auto mb-2 text-gray-600" />
+                <p className="text-sm font-medium">{category}</p>
+                <p className="text-xs text-gray-500">{categoryProducts.length} {language === 'es' ? 'productos' : 'products'}</p>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Highlighted Products */}
+        {highlightedProducts.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">
+              {language === 'es' ? 'Productos Destacados' : 'Featured Products'}
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {highlightedProducts.slice(0, 4).map((product) => {
+                const highlight = getProductHighlight(product.id);
+                const discountedPrice = getDiscountedPrice(product);
+                const hasDiscount = discountedPrice < product.price;
+                
+                return (
+                  <div key={product.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow group">
+                    <div className="relative overflow-hidden">
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        className="w-full h-40 object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      {highlight && (
+                        <div className="absolute top-2 left-2">
+                          <span 
+                            className="px-2 py-1 text-xs font-bold text-white rounded-full"
+                            style={{ backgroundColor: highlight.badgeColor }}
+                          >
+                            {highlight.badgeText}
+                          </span>
+                        </div>
+                      )}
+                      {hasDiscount && (
+                        <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold">
+                          -{Math.round(((product.price - discountedPrice) / product.price) * 100)}%
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-3">
+                      <h3 className="font-medium text-gray-900 mb-1 text-sm line-clamp-2">
+                        {highlight?.title || product.name}
+                      </h3>
+                      <div className="mb-2">
                         {hasDiscount ? (
                           <div className="flex items-center space-x-2">
                             <span className="text-lg font-bold text-red-600">
-                              {tenant.settings.currency === 'USD' ? '$' : tenant.settings.currency} {discountedPrice.toFixed(2)}
+                              {formatPrice(discountedPrice)}
                             </span>
                             <span className="text-sm text-gray-500 line-through">
-                              ${product.price.toFixed(2)}
+                              {formatPrice(product.price)}
                             </span>
                           </div>
                         ) : (
-                          <span className="text-2xl font-bold text-gray-900">
-                            {tenant.settings.currency === 'USD' ? '$' : tenant.settings.currency} {product.price.toFixed(2)}
+                          <span className="text-lg font-bold text-gray-900">
+                            {formatPrice(product.price)}
                           </span>
                         )}
                       </div>
-                      <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                        {product.category}
-                      </span>
+                      <button
+                        onClick={() => addToCart(product)}
+                        className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm flex items-center justify-center space-x-1"
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span>{t('addToCart')}</span>
+                      </button>
                     </div>
-                    <button
-                      onClick={() => addToCart(product)}
-                      disabled={product.stock === 0}
-                      className={`w-full ${buttonColors[tenant.settings.theme]} disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-2 rounded-lg transition-colors flex items-center justify-center space-x-2`}
-                    >
-                      <Plus className="w-4 h-4" />
-                      <span>Agregar al Carrito</span>
-                    </button>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>
-      )}
-      {/* Search and Filters */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-8">
-          <div className="flex flex-col md:flex-row gap-4">
+        )}
+
+        {/* Search and Filters */}
+        <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200 mb-6">
+          <div className="flex flex-col lg:flex-row gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type="text"
-                placeholder="Buscar productos..."
+                placeholder={language === 'es' ? 'Buscar productos...' : 'Search products...'}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
-            <div className="flex items-center space-x-2">
-              <Filter className="text-gray-400 w-5 h-5" />
+            
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <Filter className="text-gray-400 w-5 h-5" />
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">{t('allCategories')}</option>
+                  {categories.map(category => (
+                    <option key={category} value={category}>{category}</option>
+                  ))}
+                </select>
+              </div>
+              
               <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
                 className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
-                <option value="">Todas las categorías</option>
-                {categories.map(category => (
-                  <option key={category} value={category}>{category}</option>
-                ))}
+                <option value="">{language === 'es' ? 'Ordenar por' : 'Sort by'}</option>
+                <option value="recent_offers">{t('recentOffers')}</option>
+                <option value="oldest_offers">{t('oldestOffers')}</option>
+                <option value="price_high_low">{t('priceHighToLow')}</option>
+                <option value="price_low_high">{t('priceLowToHigh')}</option>
               </select>
+              
+              <div className="flex border border-gray-300 rounded-lg">
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={`p-2 ${viewMode === 'grid' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+                >
+                  <Grid className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`p-2 ${viewMode === 'list' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+                >
+                  <List className="w-5 h-5" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Products Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredProducts.map((product) => (
-            <div key={product.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow group relative">
-              <div className="relative overflow-hidden">
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-                {getProductHighlight(product.id) && (
-                  <div className="absolute top-2 left-2">
-                    <span 
-                      className="px-2 py-1 text-xs font-bold text-white rounded-full"
-                      style={{ backgroundColor: getProductHighlight(product.id)?.badgeColor }}
-                    >
-                      {getProductHighlight(product.id)?.badgeText}
-                    </span>
-                  </div>
-                )}
-                {getDiscountedPrice(product) < product.price && (
-                  <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold">
-                    -{Math.round(((product.price - getDiscountedPrice(product)) / product.price) * 100)}%
-                  </div>
-                )}
-              </div>
-              <div className="p-4">
-                <h3 className="font-semibold text-gray-900 mb-2">{product.name}</h3>
-                <p className="text-sm text-gray-600 mb-3 line-clamp-2">{product.description}</p>
-                <div className="flex justify-between items-center mb-3">
-                  <div>
-                    {getDiscountedPrice(product) < product.price ? (
-                      <div className="flex items-center space-x-2">
-                        <span className="text-lg font-bold text-red-600">
-                          {tenant.settings.currency === 'USD' ? '$' : tenant.settings.currency} {getDiscountedPrice(product).toFixed(2)}
+        {/* Products Grid - Grainger Style */}
+        <div className={`grid gap-4 ${
+          viewMode === 'grid' 
+            ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5' 
+            : 'grid-cols-1'
+        }`}>
+          {filteredProducts.map((product) => {
+            const highlight = getProductHighlight(product.id);
+            const discountedPrice = getDiscountedPrice(product);
+            const hasDiscount = discountedPrice < product.price;
+            
+            if (viewMode === 'list') {
+              return (
+                <div key={product.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow">
+                  <div className="flex items-center space-x-4">
+                    <div className="relative">
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        className="w-20 h-20 rounded-lg object-cover"
+                      />
+                      {highlight && (
+                        <span 
+                          className="absolute -top-1 -right-1 px-1 py-0.5 text-xs font-bold text-white rounded-full"
+                          style={{ backgroundColor: highlight.badgeColor }}
+                        >
+                          {highlight.badgeText}
                         </span>
-                        <span className="text-sm text-gray-500 line-through">
-                          ${product.price.toFixed(2)}
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-medium text-gray-900 mb-1">{product.name}</h3>
+                      <p className="text-sm text-gray-600 mb-2 line-clamp-2">{product.description}</p>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          {hasDiscount ? (
+                            <div className="flex items-center space-x-2">
+                              <span className="text-xl font-bold text-red-600">
+                                {formatPrice(discountedPrice)}
+                              </span>
+                              <span className="text-sm text-gray-500 line-through">
+                                {formatPrice(product.price)}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-xl font-bold text-gray-900">
+                              {formatPrice(product.price)}
+                            </span>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => addToCart(product)}
+                          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-1"
+                        >
+                          <Plus className="w-4 h-4" />
+                          <span>{t('addToCart')}</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+
+            return (
+              <div key={product.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow group">
+                <div className="relative overflow-hidden">
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                  {highlight && (
+                    <div className="absolute top-1 left-1">
+                      <span 
+                        className="px-1 py-0.5 text-xs font-bold text-white rounded-full"
+                        style={{ backgroundColor: highlight.badgeColor }}
+                      >
+                        {highlight.badgeText}
+                      </span>
+                    </div>
+                  )}
+                  {hasDiscount && (
+                    <div className="absolute top-1 right-1 bg-red-500 text-white px-1 py-0.5 rounded-full text-xs font-bold">
+                      -{Math.round(((product.price - discountedPrice) / product.price) * 100)}%
+                    </div>
+                  )}
+                </div>
+                <div className="p-3">
+                  <h3 className="font-medium text-gray-900 mb-1 text-sm line-clamp-2">
+                    {product.name}
+                  </h3>
+                  <div className="mb-2">
+                    {hasDiscount ? (
+                      <div className="flex flex-col">
+                        <span className="text-lg font-bold text-red-600">
+                          {formatPrice(discountedPrice)}
+                        </span>
+                        <span className="text-xs text-gray-500 line-through">
+                          {formatPrice(product.price)}
                         </span>
                       </div>
                     ) : (
-                      <span className="text-2xl font-bold text-gray-900">
-                        {tenant.settings.currency === 'USD' ? '$' : tenant.settings.currency} {product.price.toFixed(2)}
+                      <span className="text-lg font-bold text-gray-900">
+                        {formatPrice(product.price)}
                       </span>
                     )}
                   </div>
-                  <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                    {product.category}
-                  </span>
+                  <div className="text-xs text-gray-500 mb-2">
+                    {product.stock} {language === 'es' ? 'disponibles' : 'available'}
+                  </div>
+                  <button
+                    onClick={() => addToCart(product)}
+                    disabled={product.stock === 0}
+                    className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors text-sm flex items-center justify-center space-x-1"
+                  >
+                    <Plus className="w-3 h-3" />
+                    <span>{t('addToCart')}</span>
+                  </button>
                 </div>
-                <div className="text-xs text-gray-500 mb-3">
-                  {product.stock} disponibles
-                </div>
-                <button
-                  onClick={() => addToCart(product)}
-                  disabled={product.stock === 0}
-                  className={`w-full ${buttonColors[tenant.settings.theme]} disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-2 rounded-lg transition-colors flex items-center justify-center space-x-2`}
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Agregar al Carrito</span>
-                </button>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {filteredProducts.length === 0 && (
           <div className="text-center py-12">
             <Search className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500 text-lg">No se encontraron productos</p>
+            <p className="text-gray-500 text-lg">
+              {language === 'es' ? 'No se encontraron productos' : 'No products found'}
+            </p>
           </div>
         )}
       </div>
@@ -468,21 +599,27 @@ export function PublicStore({ products, tenant, campaigns, bannerSettings, produ
               <p className="text-gray-400">{tenant.settings.address}</p>
             </div>
             <div>
-              <h4 className="font-semibold mb-4">Contacto</h4>
+              <h4 className="font-semibold mb-4">
+                {language === 'es' ? 'Contacto' : 'Contact'}
+              </h4>
               <p className="text-gray-400 mb-2">Email: {tenant.settings.email}</p>
-              <p className="text-gray-400">Teléfono: {tenant.settings.phone}</p>
+              <p className="text-gray-400">
+                {language === 'es' ? 'Teléfono' : 'Phone'}: {tenant.settings.phone}
+              </p>
             </div>
             <div>
-              <h4 className="font-semibold mb-4">Información</h4>
+              <h4 className="font-semibold mb-4">
+                {language === 'es' ? 'Información' : 'Information'}
+              </h4>
               <ul className="space-y-2 text-gray-400">
-                <li>Términos y Condiciones</li>
-                <li>Política de Privacidad</li>
-                <li>Política de Devoluciones</li>
+                <li>{language === 'es' ? 'Términos y Condiciones' : 'Terms and Conditions'}</li>
+                <li>{language === 'es' ? 'Política de Privacidad' : 'Privacy Policy'}</li>
+                <li>{language === 'es' ? 'Política de Devoluciones' : 'Return Policy'}</li>
               </ul>
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 {tenant.settings.storeName}. Todos los derechos reservados.</p>
+            <p>&copy; 2024 {tenant.settings.storeName}. {language === 'es' ? 'Todos los derechos reservados' : 'All rights reserved'}.</p>
           </div>
         </div>
       </footer>
@@ -492,7 +629,7 @@ export function PublicStore({ products, tenant, campaigns, bannerSettings, produ
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-2xl font-semibold">Carrito de Compras</h3>
+              <h3 className="text-2xl font-semibold">{t('cart')}</h3>
               <button
                 onClick={() => setShowCart(false)}
                 className="text-gray-400 hover:text-gray-600 text-2xl"
@@ -513,9 +650,7 @@ export function PublicStore({ products, tenant, campaigns, bannerSettings, produ
                       />
                       <div className="flex-1">
                         <h4 className="font-semibold">{item.product.name}</h4>
-                        <p className="text-gray-600">
-                          {tenant.settings.currency === 'USD' ? '$' : tenant.settings.currency} {item.product.price.toFixed(2)} c/u
-                        </p>
+                        <p className="text-gray-600">{formatPrice(getDiscountedPrice(item.product))} c/u</p>
                       </div>
                       <div className="flex items-center space-x-2">
                         <button
@@ -534,9 +669,7 @@ export function PublicStore({ products, tenant, campaigns, bannerSettings, produ
                         </button>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold">
-                          {tenant.settings.currency === 'USD' ? '$' : tenant.settings.currency} {(item.product.price * item.quantity).toFixed(2)}
-                        </p>
+                        <p className="font-semibold">{formatPrice(getDiscountedPrice(item.product) * item.quantity)}</p>
                       </div>
                     </div>
                   ))}
@@ -544,19 +677,19 @@ export function PublicStore({ products, tenant, campaigns, bannerSettings, produ
 
                 <div className="border-t pt-4 mb-6">
                   <div className="flex justify-between items-center text-xl font-bold">
-                    <span>Total:</span>
-                    <span>
-                      {tenant.settings.currency === 'USD' ? '$' : tenant.settings.currency} {getTotalPrice().toFixed(2)}
-                    </span>
+                    <span>{t('total')}:</span>
+                    <span>{formatPrice(getTotalPrice())}</span>
                   </div>
                 </div>
 
                 <div className="space-y-4 mb-6">
-                  <h4 className="font-semibold">Información del Cliente</h4>
+                  <h4 className="font-semibold">
+                    {language === 'es' ? 'Información del Cliente' : 'Customer Information'}
+                  </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <input
                       type="text"
-                      placeholder="Nombre completo"
+                      placeholder={language === 'es' ? 'Nombre completo' : 'Full name'}
                       value={customerInfo.name}
                       onChange={(e) => setCustomerInfo({...customerInfo, name: e.target.value})}
                       className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -571,7 +704,7 @@ export function PublicStore({ products, tenant, campaigns, bannerSettings, produ
                   </div>
                   <input
                     type="text"
-                    placeholder="Dirección de entrega"
+                    placeholder={language === 'es' ? 'Dirección de entrega' : 'Delivery address'}
                     value={customerInfo.address}
                     onChange={(e) => setCustomerInfo({...customerInfo, address: e.target.value})}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -583,21 +716,23 @@ export function PublicStore({ products, tenant, campaigns, bannerSettings, produ
                     onClick={clearCart}
                     className="flex-1 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                   >
-                    Vaciar Carrito
+                    {language === 'es' ? 'Vaciar Carrito' : 'Clear Cart'}
                   </button>
                   <button
                     onClick={handlePurchase}
                     disabled={!customerInfo.name || !customerInfo.email}
-                    className={`flex-1 ${buttonColors[tenant.settings.theme]} disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-4 py-3 rounded-lg transition-colors`}
+                    className="flex-1 bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                   >
-                    Finalizar Compra
+                    {t('checkout')}
                   </button>
                 </div>
               </>
             ) : (
               <div className="text-center py-12">
                 <ShoppingCart className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500 text-lg">El carrito está vacío</p>
+                <p className="text-gray-500 text-lg">
+                  {language === 'es' ? 'El carrito está vacío' : 'Cart is empty'}
+                </p>
               </div>
             )}
           </div>
