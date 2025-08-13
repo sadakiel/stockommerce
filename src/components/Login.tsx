@@ -129,6 +129,8 @@ export function Login({ onLogin, onSSOLogin, onBack }: LoginProps) {
                 className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
               >
                 <Github className="w-5 h-5 text-gray-900" />
+              </button>
+
               <button
                 onClick={() => handleSSOLogin('facebook')}
                 disabled={loading}
@@ -138,7 +140,6 @@ export function Login({ onLogin, onSSOLogin, onBack }: LoginProps) {
               </button>
             </div>
           </div>
-              </button>
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-500">
               Demo: admin@stockommerce.com / stockommerce2024
