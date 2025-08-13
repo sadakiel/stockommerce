@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Save, Upload, Palette, Eye, Hash, Globe, Plus, CheckCircle, CreditCard, Trash2, Edit } from 'lucide-react';
+import { Save, Upload, Palette, Eye, Hash, Globe, Plus, CheckCircle, CreditCard, Trash2, Edit, Settings as SettingsIcon } from 'lucide-react';
 import { Tenant } from '../App';
 import { DocumentNumberingConfig } from './DocumentNumberingConfig';
 import { useTranslation } from '../hooks/useTranslation';
@@ -140,7 +140,7 @@ export function Settings({
       <div className="border-b">
         <nav className="flex space-x-8">
           {[
-            { id: 'general', label: 'General', icon: Settings },
+            { id: 'general', label: 'General', icon: SettingsIcon },
             { id: 'payments', label: 'Medios de Pago', icon: CreditCard },
             { id: 'numbering', label: 'Numeración', icon: Hash },
             { id: 'language', label: 'Idioma', icon: Globe },
@@ -581,7 +581,7 @@ export function Settings({
       )}
 
       {activeTab === 'general' && (
-      <div className="mt-8 pt-6 border-t border-gray-200">
+        <div className="mt-8 pt-6 border-t border-gray-200">
         <div className="flex justify-end">
           <button
             onClick={handleSave}
@@ -775,6 +775,7 @@ export function Settings({
               </button>
             </div>
           </div>
+        </div>
         </div>
       )}
     </div>
