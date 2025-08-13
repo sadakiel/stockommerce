@@ -13,7 +13,7 @@ interface PaymentMethod {
 }
 
 interface SettingsProps {
-  tenant: Tenant;
+  tenant: Tenant | null;
   onUpdateTenant: (updates: Partial<Tenant>) => void;
   documentNumberings: any[];
   onCreateNumbering: (numbering: any) => void;
@@ -34,7 +34,15 @@ export function Settings({
   onUpdatePaymentMethods
 }: SettingsProps) {
   const { language, changeLanguage } = useTranslation();
-  const [settings, setSettings] = useState(tenant.settings);
+  const [settings, setSettings] = useState(tenant?.settings || {
+    storeName: '',
+    currency: 'COP',
+    theme: 'blue',
+    logo: '',
+    address: '',
+    phone: '',
+    email: ''
+  });
   const [saved, setSaved] = useState(false);
   const [activeTab, setActiveTab] = useState<'general' | 'payments' | 'numbering' | 'language' | 'domain'>('general');
   const [showPaymentModal, setShowPaymentModal] = useState(false);
