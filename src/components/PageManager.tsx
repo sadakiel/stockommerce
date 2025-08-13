@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Plus, Edit, Eye, Trash2, Save, X, Menu } from 'lucide-react';
 import { CustomPage } from '../types/pages';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 interface PageManagerProps {
   pages: CustomPage[];
@@ -209,12 +211,21 @@ export function PageManager({ pages, onCreatePage, onUpdatePage, onDeletePage }:
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Contenido de la Página
                 </label>
-                <textarea
+                <ReactQuill
+                  theme="snow"
                   value={pageForm.content}
-                  onChange={(e) => setPageForm({...pageForm, content: e.target.value})}
-                  rows={15}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  onChange={(content) => setPageForm({...pageForm, content})}
                   placeholder="Escribe el contenido de la página aquí. Puedes usar HTML básico para formato."
+                  modules={{
+                    toolbar: [
+                      [{ 'header': [1, 2, 3, false] }],
+                      ['bold', 'italic', 'underline', 'strike'],
+                      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                      ['link', 'image'],
+                      ['clean']
+                    ]
+                  }}
+                  style={{ height: '300px', marginBottom: '50px' }}
                 />
               </div>
 

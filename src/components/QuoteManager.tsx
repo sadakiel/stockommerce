@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Plus, Mail, FileText, Eye, Edit, Send } from 'lucide-react';
+import { Plus, Mail, FileText, Eye, Edit, Send, Download, Printer, X } from 'lucide-react';
 import { Product } from '../App';
 import { CustomerSearch } from './CustomerSearch';
 import { CustomerInfo } from '../types/orders';
+import jsPDF from 'jspdf';
 
 interface Quote {
   id: string;
@@ -57,6 +58,8 @@ export function QuoteManager({ products, quotes, onCreateQuote, onUpdateQuote, o
     subject: '',
     message: ''
   });
+  
+  const [viewingQuote, setViewingQuote] = useState<Quote | null>(null);
 
   const addProductToQuote = (product: Product) => {
     const existing = selectedProducts.find(item => item.product.id === product.id);
@@ -145,6 +148,127 @@ export function QuoteManager({ products, quotes, onCreateQuote, onUpdateQuote, o
     }
   };
 
+  const generateQuotePDF = (quote: Quote) => {
+    const pdf = new jsPDF();
+    
+    // Header
+    pdf.setFontSize(20);
+    pdf.text('COTIZACIÓN', 20, 30);
+    
+    pdf.setFontSize(12);
+    pdf.text(`Número: ${quote.number}`, 20, 45);
+    pdf.text(`Fecha: ${new Date(quote.created_at).toLocaleDateString()}`, 20, 55);
+    pdf.text(`Válida hasta: ${new Date(quote.validUntil).toLocaleDateString()}`, 20, 65);
+    
+    // Customer info
+    pdf.setFontSize(14);
+    pdf.text('CLIENTE:', 20, 85);
+    
+    pdf.setFontSize(10);
+    pdf.text(`Nombre: ${quote.customerName}`, 20, 100);
+    pdf.text(`Email: ${quote.customerEmail}`, 20, 110);
+    pdf.text(`Teléfono: ${quote.customerPhone}`, 20, 120);
+    
+    // Items
+    pdf.setFontSize(14);
+    pdf.text('PRODUCTOS:', 20, 140);
+    
+    pdf.setFontSize(10);
+    let yPos = 155;
+    quote.items.forEach((item, index) => {
+      pdf.text(`${index + 1}. ${item.product.name}`, 20, yPos);
+      pdf.text(`Cantidad: ${item.quantity}`, 30, yPos + 10);
+      pdf.text(`Precio: $${item.price.toFixed(2)}`, 30, yPos + 20);
+      pdf.text(`Total: $${(item.price * item.quantity).toFixed(2)}`, 30, yPos + 30);
+      yPos += 45;
+    });
+    
+    // Totals
+    yPos += 10;
+    pdf.setFontSize(12);
+    pdf.text(`Subtotal: $${quote.subtotal.toFixed(2)}`, 20, yPos);
+    pdf.text(`IVA (19%): $${quote.tax.toFixed(2)}`, 20, yPos + 15);
+    pdf.text(`TOTAL: $${quote.total.toFixed(2)}`, 20, yPos + 30);
+    
+    // Notes
+    if (quote.notes) {
+      pdf.setFontSize(10);
+      pdf.text('Notas:', 20, yPos + 50);
+      pdf.text(quote.notes, 20, yPos + 65);
+    }
+    
+    pdf.save(`cotizacion-${quote.number}.pdf`);
+  };
+
+  const printQuote = (quote: Quote) => {
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Cotización ${quote.number}</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 20px; }
+              .header { text-align: center; margin-bottom: 30px; }
+              .customer-info { background: #f5f5f5; padding: 15px; margin: 20px 0; }
+              .items-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+              .items-table th, .items-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+              .items-table th { background-color: #f2f2f2; }
+              .totals { text-align: right; margin: 20px 0; }
+              .notes { margin-top: 30px; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h1>COTIZACIÓN</h1>
+              <p>Número: ${quote.number}</p>
+              <p>Fecha: ${new Date(quote.created_at).toLocaleDateString()}</p>
+              <p>Válida hasta: ${new Date(quote.validUntil).toLocaleDateString()}</p>
+            </div>
+            
+            <div class="customer-info">
+              <h3>INFORMACIÓN DEL CLIENTE</h3>
+              <p><strong>Nombre:</strong> ${quote.customerName}</p>
+              <p><strong>Email:</strong> ${quote.customerEmail}</p>
+              <p><strong>Teléfono:</strong> ${quote.customerPhone}</p>
+            </div>
+            
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th>Cantidad</th>
+                  <th>Precio Unitario</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${quote.items.map(item => `
+                  <tr>
+                    <td>${item.product.name}</td>
+                    <td>${item.quantity}</td>
+                    <td>$${item.price.toFixed(2)}</td>
+                    <td>$${(item.price * item.quantity).toFixed(2)}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+            
+            <div class="totals">
+              <p>Subtotal: $${quote.subtotal.toFixed(2)}</p>
+              <p>IVA (19%): $${quote.tax.toFixed(2)}</p>
+              <p><strong>TOTAL: $${quote.total.toFixed(2)}</strong></p>
+            </div>
+            
+            ${quote.notes ? `<div class="notes"><h4>Notas:</h4><p>${quote.notes}</p></div>` : ''}
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.print();
+    }
+  };
+
   const getStatusColor = (status: Quote['status']) => {
     const colors = {
       draft: 'bg-gray-100 text-gray-800',
@@ -220,10 +344,25 @@ export function QuoteManager({ products, quotes, onCreateQuote, onUpdateQuote, o
                   </td>
                   <td className="py-3 px-4 text-right">
                     <div className="flex justify-end space-x-2">
-                      <button className="text-blue-600 hover:text-blue-800 p-1">
+                      <button 
+                        onClick={() => setViewingQuote(quote)}
+                        className="text-blue-600 hover:text-blue-800 p-1"
+                      >
                         <Eye className="w-4 h-4" />
                       </button>
-                      <button className="text-purple-600 hover:text-purple-800 p-1">
+                      <button 
+                        onClick={() => generateQuotePDF(quote)}
+                        className="text-green-600 hover:text-green-800 p-1"
+                      >
+                        <Download className="w-4 h-4" />
+                      </button>
+                      <button 
+                        onClick={() => printQuote(quote)}
+                        className="text-purple-600 hover:text-purple-800 p-1"
+                      >
+                        <Printer className="w-4 h-4" />
+                      </button>
+                      <button className="text-orange-600 hover:text-orange-800 p-1">
                         <Edit className="w-4 h-4" />
                       </button>
                       <button
@@ -486,6 +625,117 @@ export function QuoteManager({ products, quotes, onCreateQuote, onUpdateQuote, o
         </div>
       )}
 
+      {/* View Quote Modal */}
+      {viewingQuote && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b">
+              <div className="flex justify-between items-center">
+                <h3 className="text-xl font-semibold">Cotización {viewingQuote.number}</h3>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => generateQuotePDF(viewingQuote)}
+                    className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center space-x-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>PDF</span>
+                  </button>
+                  <button
+                    onClick={() => printQuote(viewingQuote)}
+                    className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 flex items-center space-x-2"
+                  >
+                    <Printer className="w-4 h-4" />
+                    <span>Imprimir</span>
+                  </button>
+                  <button
+                    onClick={() => setViewingQuote(null)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <div className="p-6" id="quote-content">
+              {/* Quote Header */}
+              <div className="text-center mb-8">
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">COTIZACIÓN</h1>
+                <div className="grid grid-cols-3 gap-4 text-sm">
+                  <div>
+                    <span className="text-gray-500">Número:</span>
+                    <p className="font-semibold">{viewingQuote.number}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Fecha:</span>
+                    <p className="font-semibold">{new Date(viewingQuote.created_at).toLocaleDateString()}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Válida hasta:</span>
+                    <p className="font-semibold">{new Date(viewingQuote.validUntil).toLocaleDateString()}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Customer Info */}
+              <div className="bg-gray-50 p-4 rounded-lg mb-6">
+                <h3 className="font-semibold text-gray-900 mb-3">INFORMACIÓN DEL CLIENTE</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                  <div>
+                    <span className="text-gray-500">Nombre:</span>
+                    <p className="font-medium">{viewingQuote.customerName}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Email:</span>
+                    <p className="font-medium">{viewingQuote.customerEmail}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Teléfono:</span>
+                    <p className="font-medium">{viewingQuote.customerPhone}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Items Table */}
+              <div className="mb-6">
+                <h3 className="font-semibold text-gray-900 mb-3">PRODUCTOS COTIZADOS</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full border border-gray-300">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="border border-gray-300 px-4 py-2 text-left">Producto</th>
+                        <th className="border border-gray-300 px-4 py-2 text-center">Cantidad</th>
+                        <th className="border border-gray-300 px-4 py-2 text-right">Precio Unit.</th>
+                        <th className="border border-gray-300 px-4 py-2 text-right">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {viewingQuote.items.map((item, index) => (
+                        <tr key={index}>
+                          <td className="border border-gray-300 px-4 py-2">
+                            <div className="flex items-center space-x-3">
+                              <img
+                                src={item.product.image}
+                                alt={item.product.name}
+                                className="w-10 h-10 rounded object-cover"
+                              />
+                              <div>
+                                <p className="font-medium">{item.product.name}</p>
+                                <p className="text-sm text-gray-500">SKU: {item.product.sku}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="border border-gray-300 px-4 py-2 text-center">{item.quantity}</td>
+                          <td className="border border-gray-300 px-4 py-2 text-right">${item.price.toFixed(2)}</td>
+                          <td className="border border-gray-300 px-4 py-2 text-right font-semibold">
+                            ${(item.price * item.quantity).toFixed(2)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
       {/* Email Modal */}
       {emailModal.show && emailModal.quote && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -532,6 +782,23 @@ export function QuoteManager({ products, quotes, onCreateQuote, onUpdateQuote, o
               </div>
             </div>
 
+              {/* Totals */}
+              <div className="bg-gray-50 p-4 rounded-lg mb-6">
+                <div className="space-y-2 text-right">
+                  <div className="flex justify-between">
+                    <span>Subtotal:</span>
+                    <span>${viewingQuote.subtotal.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>IVA (19%):</span>
+                    <span>${viewingQuote.tax.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-xl font-bold border-t pt-2">
+                    <span>TOTAL:</span>
+                    <span>${viewingQuote.total.toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
             <div className="p-6 border-t flex justify-end space-x-3">
               <button
                 onClick={() => setEmailModal({ show: false, quote: null })}
@@ -546,6 +813,17 @@ export function QuoteManager({ products, quotes, onCreateQuote, onUpdateQuote, o
                 <Send className="w-4 h-4" />
                 <span>Enviar Email</span>
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+              {/* Notes */}
+              {viewingQuote.notes && (
+                <div className="border-t pt-4">
+                  <h4 className="font-semibold text-gray-900 mb-2">Notas:</h4>
+                  <p className="text-gray-700">{viewingQuote.notes}</p>
+                </div>
+              )}
             </div>
           </div>
         </div>

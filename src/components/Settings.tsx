@@ -1,8 +1,16 @@
 import React, { useState } from 'react';
-import { Save, Upload, Palette, Eye, Hash, Globe, Plus, CheckCircle } from 'lucide-react';
+import { Save, Upload, Palette, Eye, Hash, Globe, Plus, CheckCircle, CreditCard, Trash2, Edit } from 'lucide-react';
 import { Tenant } from '../App';
 import { DocumentNumberingConfig } from './DocumentNumberingConfig';
 import { useTranslation } from '../hooks/useTranslation';
+
+interface PaymentMethod {
+  id: string;
+  name: string;
+  type: 'card' | 'transfer' | 'cash' | 'digital_wallet' | 'crypto';
+  enabled: boolean;
+  config: any;
+}
 
 interface SettingsProps {
   tenant: Tenant;
@@ -11,6 +19,8 @@ interface SettingsProps {
   onCreateNumbering: (numbering: any) => void;
   onUpdateNumbering: (id: string, updates: any) => void;
   onDeleteNumbering: (id: string) => void;
+  paymentMethods: PaymentMethod[];
+  onUpdatePaymentMethods: (methods: PaymentMethod[]) => void;
 }
 
 export function Settings({ 
@@ -19,17 +29,73 @@ export function Settings({
   documentNumberings, 
   onCreateNumbering, 
   onUpdateNumbering, 
-  onDeleteNumbering 
+  onDeleteNumbering,
+  paymentMethods,
+  onUpdatePaymentMethods
 }: SettingsProps) {
   const { language, changeLanguage } = useTranslation();
   const [settings, setSettings] = useState(tenant.settings);
   const [saved, setSaved] = useState(false);
-  const [activeTab, setActiveTab] = useState<'general' | 'numbering' | 'language'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'payments' | 'numbering' | 'language' | 'domain'>('general');
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [editingPayment, setEditingPayment] = useState<PaymentMethod | null>(null);
+  
+  const [paymentForm, setPaymentForm] = useState({
+    name: '',
+    type: 'card' as PaymentMethod['type'],
+    enabled: true,
+    config: {}
+  });
 
   const handleSave = () => {
     onUpdateTenant({ settings });
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
+  };
+
+  const handleAddPaymentMethod = () => {
+    const newMethod: PaymentMethod = {
+      ...paymentForm,
+      id: Date.now().toString()
+    };
+    onUpdatePaymentMethods([...paymentMethods, newMethod]);
+    resetPaymentForm();
+  };
+
+  const handleUpdatePaymentMethod = () => {
+    if (editingPayment) {
+      const updatedMethods = paymentMethods.map(m => 
+        m.id === editingPayment.id ? { ...editingPayment, ...paymentForm } : m
+      );
+      onUpdatePaymentMethods(updatedMethods);
+      resetPaymentForm();
+    }
+  };
+
+  const resetPaymentForm = () => {
+    setPaymentForm({
+      name: '',
+      type: 'card',
+      enabled: true,
+      config: {}
+    });
+    setEditingPayment(null);
+    setShowPaymentModal(false);
+  };
+
+  const deletePaymentMethod = (id: string) => {
+    onUpdatePaymentMethods(paymentMethods.filter(m => m.id !== id));
+  };
+
+  const openEditPayment = (method: PaymentMethod) => {
+    setEditingPayment(method);
+    setPaymentForm({
+      name: method.name,
+      type: method.type,
+      enabled: method.enabled,
+      config: method.config
+    });
+    setShowPaymentModal(true);
   };
 
   const themes = [
@@ -47,6 +113,14 @@ export function Settings({
     { code: 'MXN', name: 'Peso Mexicano', symbol: '$' }
   ];
 
+  const paymentTypes = [
+    { value: 'card', label: 'Tarjeta de Crédito/Débito', icon: '💳' },
+    { value: 'transfer', label: 'Transferencia Bancaria', icon: '🏦' },
+    { value: 'cash', label: 'Efectivo', icon: '💵' },
+    { value: 'digital_wallet', label: 'Billetera Digital', icon: '📱' },
+    { value: 'crypto', label: 'Criptomonedas', icon: '₿' }
+  ];
+
   return (
     <div className="space-y-6">
       <div>
@@ -59,8 +133,10 @@ export function Settings({
         <nav className="flex space-x-8">
           {[
             { id: 'general', label: 'General', icon: Settings },
+            { id: 'payments', label: 'Medios de Pago', icon: CreditCard },
             { id: 'numbering', label: 'Numeración', icon: Hash },
-            { id: 'language', label: 'Idioma', icon: Globe }
+            { id: 'language', label: 'Idioma', icon: Globe },
+            { id: 'domain', label: 'Dominio', icon: Globe }
           ].map((tab) => {
             const Icon = tab.icon;
             return (
@@ -287,6 +363,62 @@ export function Settings({
       </div>
       )}
 
+      {/* Payments Tab */}
+      {activeTab === 'payments' && (
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-semibold text-gray-900">Medios de Pago</h3>
+            <button
+              onClick={() => setShowPaymentModal(true)}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+            >
+              <Plus className="w-5 h-5" />
+              <span>Agregar Método</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {paymentMethods.map((method) => {
+              const typeInfo = paymentTypes.find(t => t.value === method.type);
+              return (
+                <div key={method.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-3">
+                      <span className="text-2xl">{typeInfo?.icon}</span>
+                      <div>
+                        <h4 className="font-semibold text-gray-900">{method.name}</h4>
+                        <p className="text-sm text-gray-500">{typeInfo?.label}</p>
+                      </div>
+                    </div>
+                    <span className={`px-2 py-1 text-xs rounded-full ${
+                      method.enabled ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                    }`}>
+                      {method.enabled ? 'Activo' : 'Inactivo'}
+                    </span>
+                  </div>
+                  
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => openEditPayment(method)}
+                      className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-1"
+                    >
+                      <Edit className="w-4 h-4" />
+                      <span>Editar</span>
+                    </button>
+                    <button
+                      onClick={() => deletePaymentMethod(method.id)}
+                      className="px-3 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Numbering Tab */}
       {activeTab === 'numbering' && (
         <DocumentNumberingConfig
@@ -362,6 +494,79 @@ export function Settings({
                 <li>• La configuración se guarda automáticamente</li>
                 <li>• Los reportes se generarán en el idioma seleccionado</li>
               </ul>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Domain Tab */}
+      {activeTab === 'domain' && (
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <h3 className="text-lg font-semibold text-gray-900 mb-6">Configuración de Dominio</h3>
+          
+          <div className="space-y-6">
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+              <h4 className="font-medium text-blue-900 mb-2">Dominio Personalizado</h4>
+              <p className="text-sm text-blue-700">
+                Conecta tu propio dominio para que los clientes accedan a tu tienda con tu marca.
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Dominio Actual
+              </label>
+              <div className="p-3 bg-gray-50 border border-gray-300 rounded-lg">
+                <p className="font-mono text-gray-700">
+                  https://fascinating-tiramisu-f2c777.netlify.app
+                </p>
+                <p className="text-xs text-gray-500 mt-1">Dominio temporal de Netlify</p>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Dominio Personalizado
+              </label>
+              <input
+                type="text"
+                placeholder="www.supermangueras.com"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Ingresa tu dominio sin https://
+              </p>
+            </div>
+
+            <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+              <h4 className="font-medium text-yellow-900 mb-2">Instrucciones de Configuración</h4>
+              <ol className="text-sm text-yellow-700 space-y-2">
+                <li>1. <strong>Compra tu dominio</strong> en un registrador (GoDaddy, Namecheap, etc.)</li>
+                <li>2. <strong>Configura los DNS</strong> para apuntar a Netlify:</li>
+                <li className="ml-4">• Tipo A: 75.2.60.5</li>
+                <li className="ml-4">• CNAME www: fascinating-tiramisu-f2c777.netlify.app</li>
+                <li>3. <strong>Verifica la configuración</strong> (puede tomar hasta 24 horas)</li>
+                <li>4. <strong>Activa SSL</strong> automáticamente con Let's Encrypt</li>
+              </ol>
+            </div>
+
+            <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+              <h4 className="font-medium text-green-900 mb-2">Beneficios del Dominio Personalizado</h4>
+              <ul className="text-sm text-green-700 space-y-1">
+                <li>• <strong>Marca profesional:</strong> www.tumarca.com</li>
+                <li>• <strong>Mejor SEO:</strong> Mayor posicionamiento en Google</li>
+                <li>• <strong>Confianza del cliente:</strong> URL reconocible</li>
+                <li>• <strong>Certificado SSL:</strong> Conexión segura automática</li>
+              </ul>
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+              >
+                <Save className="w-5 h-5" />
+                <span>Configurar Dominio</span>
+              </button>
             </div>
           </div>
         </div>
@@ -488,6 +693,82 @@ export function Settings({
           </div>
         </div>
       </div>
+
+      {/* Payment Method Modal */}
+      {showPaymentModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-semibold">
+                {editingPayment ? 'Editar Método de Pago' : 'Nuevo Método de Pago'}
+              </h3>
+              <button onClick={resetPaymentForm} className="text-gray-400 hover:text-gray-600">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Nombre del Método
+                </label>
+                <input
+                  type="text"
+                  value={paymentForm.name}
+                  onChange={(e) => setPaymentForm({...paymentForm, name: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="ej. Visa, Nequi, Efectivo"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Tipo de Pago
+                </label>
+                <select
+                  value={paymentForm.type}
+                  onChange={(e) => setPaymentForm({...paymentForm, type: e.target.value as any})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  {paymentTypes.map(type => (
+                    <option key={type.value} value={type.value}>
+                      {type.icon} {type.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="enabled"
+                  checked={paymentForm.enabled}
+                  onChange={(e) => setPaymentForm({...paymentForm, enabled: e.target.checked})}
+                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <label htmlFor="enabled" className="ml-2 text-sm font-medium text-gray-700">
+                  Método Activo
+                </label>
+              </div>
+            </div>
+            
+            <div className="flex space-x-3 mt-6">
+              <button
+                onClick={resetPaymentForm}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={editingPayment ? handleUpdatePaymentMethod : handleAddPaymentMethod}
+                className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                {editingPayment ? 'Actualizar' : 'Agregar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

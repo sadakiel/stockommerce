@@ -70,14 +70,28 @@ export function Sidebar({
       {/* Header */}
       <div className="p-4 border-b border-gray-200 flex items-center justify-between">
         {!isCollapsed && (
-          <h1 className="text-lg font-bold text-gray-900">ERP Sistema</h1>
+          <div className="flex items-center space-x-2">
+            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+              <div className="space-y-1">
+                <div className="w-4 h-0.5 bg-white rounded"></div>
+                <div className="w-4 h-0.5 bg-white rounded"></div>
+                <div className="w-4 h-0.5 bg-white rounded"></div>
+              </div>
+            </div>
+          </div>
         )}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
           className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
         >
           {isCollapsed ? (
-            <ChevronRight className="w-5 h-5 text-gray-600" />
+            <div className="w-5 h-5 flex items-center justify-center">
+              <div className="space-y-1">
+                <div className="w-4 h-0.5 bg-gray-600 rounded"></div>
+                <div className="w-4 h-0.5 bg-gray-600 rounded"></div>
+                <div className="w-4 h-0.5 bg-gray-600 rounded"></div>
+              </div>
+            </div>
           ) : (
             <ChevronLeft className="w-5 h-5 text-gray-600" />
           )}
