@@ -20,6 +20,7 @@ import { QuoteManager } from './components/QuoteManager';
 import { IntegrationsManager } from './components/IntegrationsManager';
 import { UserManagement } from './components/UserManagement';
 import { CampaignManager } from './components/CampaignManager';
+import { PhysicalInventory } from './components/PhysicalInventory';
 import { EnhancedProduct, TaxType } from './types/product';
 import { DianConfiguration } from './types/dian';
 import { DocumentTemplate, GeneratedDocument, WhatsAppIntegration, SocialMediaIntegration } from './types/documents';

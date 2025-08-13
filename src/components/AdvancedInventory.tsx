@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Plus, ArrowRightLeft, History, Clipboard, Search, Filter, Package, Warehouse as WarehouseIcon } from 'lucide-react';
 import { Warehouse, InventoryMovement, PhysicalCount } from '../types/pages';
 import { Product } from '../App';
+import { PhysicalInventory } from './PhysicalInventory';
 
 interface AdvancedInventoryProps {
   products: Product[];
@@ -29,6 +30,7 @@ export function AdvancedInventory({
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [showPhysicalCountModal, setShowPhysicalCountModal] = useState(false);
   const [showWarehouseModal, setShowWarehouseModal] = useState(false);
+  const [showPhysicalInventory, setShowPhysicalInventory] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedWarehouse, setSelectedWarehouse] = useState('all');
 
@@ -105,6 +107,7 @@ export function AdvancedInventory({
           </button>
           <button
             onClick={() => setShowPhysicalCountModal(true)}
+            onClick={() => setShowPhysicalInventory(true)}
             className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-2"
           >
             <Clipboard className="w-5 h-5" />
@@ -341,6 +344,19 @@ export function AdvancedInventory({
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Physical Inventory Component */}
+      {showPhysicalInventory && (
+        <div className="fixed inset-0 bg-white z-50">
+          <PhysicalInventory
+            products={products}
+            onCreatePhysicalCount={onCreatePhysicalCount}
+            onBack={() => setShowPhysicalInventory(false)}
+            currentUser={{ id: '1', name: 'Usuario' }}
+            warehouses={warehouses}
+          />
         </div>
       )}
 
