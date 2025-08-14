@@ -942,6 +942,7 @@ function App() {
               orders={onlineOrders.filter(o => o.tenantId === currentUser.tenantId)}
               recentSales={tenantSales.slice().reverse().slice(0, 20)}
               onUpdateOrderStatus={updateOrderStatus}
+              currentUser={currentUser}
             />
           )}
           {currentView === 'reports' && userPermissions.reports && (
