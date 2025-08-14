@@ -737,24 +737,5 @@ export function ProductManager({ products, taxes, currency, onAddProduct, onUpda
       )}
     </div>
 
-      {/* Product Details Modal */}
-      {viewingProduct && (
-        <ProductDetailsModal
-          product={viewingProduct}
-          onClose={() => setViewingProduct(null)}
-          onAddToCart={() => {}}
-          currency={currency}
-        />
-      )}
-    </div>
-      {/* Product Details Modal */}
-      {viewingProduct && (
-        <ProductDetailsModal
-          product={viewingProduct}
-          onClose={() => setViewingProduct(null)}
-          onAddToCart={() => {}}
-          currency={currency}
-        />
-      )}
   );
 }
