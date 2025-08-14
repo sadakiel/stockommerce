@@ -139,6 +139,7 @@ function App() {
   const [commissions, setCommissions] = useState<Commission[]>([]);
   const [salesTeam, setSalesTeam] = useState<any[]>([]);
   const [documentNumberings, setDocumentNumberings] = useState<any[]>([]);
+  const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
 
   // Initialize default warehouses
   React.useEffect(() => {
