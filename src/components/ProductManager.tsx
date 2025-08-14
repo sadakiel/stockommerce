@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Upload, X, Edit, Trash2, Save, Eye, DollarSign, Tag, Image as ImageIcon } from 'lucide-react';
+import { Plus, Upload, X, Edit, Trash2, Save, Eye, DollarSign, Tag, Image as ImageIcon, Search } from 'lucide-react';
 import { EnhancedProduct, ProductVariant, ProductImage, TaxType } from '../types/product';
 import { ProductDetailsModal } from './ProductDetailsModal';
 
@@ -16,11 +16,12 @@ export function ProductManager({ products, taxes, currency, onAddProduct, onUpda
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<EnhancedProduct | null>(null);
   const [viewingProduct, setViewingProduct] = useState<EnhancedProduct | null>(null);
-  const [activeTab, setActiveTab] = useState<'basic' | 'variants' | 'images' | 'taxes'>('basic');
+  const [activeTab, setActiveTab] = useState<'basic' | 'variants' | 'images' | 'taxes' | 'google' | 'social' | 'seo'>('basic');
   
   const [formData, setFormData] = useState({
     name: '',
     description: '',
+    longDescription: '',
     basePrice: 0,
     baseCost: 0,
     category: '',
@@ -40,10 +41,28 @@ export function ProductManager({ products, taxes, currency, onAddProduct, onUpda
       productType: '',
       googleProductCategory: '',
       brand: '',
+      mpn: '',
+      gtin: '',
       condition: 'new',
-      availability: 'in_stock'
+      availability: 'in_stock',
+      shippingWeight: 0,
+      shippingDimensions: {
+        length: 0,
+        width: 0,
+        height: 0,
+        unit: 'cm'
+      },
+      ageGroup: '',
+      gender: '',
+      color: '',
+      size: '',
+      material: '',
+      pattern: '',
+      customLabels: []
     },
     seoData: {
+      metaTitle: '',
+      metaDescription: '',
       keywords: [],
       slug: ''
     },
@@ -156,6 +175,7 @@ export function ProductManager({ products, taxes, currency, onAddProduct, onUpda
     setFormData({
       name: '',
       description: '',
+      longDescription: '',
       basePrice: 0,
       baseCost: 0,
       category: '',
@@ -163,6 +183,38 @@ export function ProductManager({ products, taxes, currency, onAddProduct, onUpda
       images: [],
       variants: [],
       taxes: [],
+      technicalSpecs: [],
+      videos: [],
+      socialMedia: {
+        facebook: { enabled: false, postTemplate: '', hashtags: [] },
+        instagram: { enabled: false, postTemplate: '', hashtags: [] },
+        twitter: { enabled: false, postTemplate: '', hashtags: [] }
+      },
+      googleMerchant: {
+        enabled: false,
+        productType: '',
+        googleProductCategory: '',
+        brand: '',
+        mpn: '',
+        gtin: '',
+        condition: 'new',
+        availability: 'in_stock',
+        shippingWeight: 0,
+        shippingDimensions: { length: 0, width: 0, height: 0, unit: 'cm' },
+        ageGroup: '',
+        gender: '',
+        color: '',
+        size: '',
+        material: '',
+        pattern: '',
+        customLabels: []
+      },
+      seoData: {
+        metaTitle: '',
+        metaDescription: '',
+        keywords: [],
+        slug: ''
+      },
       dianProductCode: '',
       unidadMedida: 'UND',
       codigoBarras: '',
@@ -178,6 +230,7 @@ export function ProductManager({ products, taxes, currency, onAddProduct, onUpda
     setFormData({
       name: product.name,
       description: product.description,
+      longDescription: product.longDescription || '',
       basePrice: product.basePrice,
       baseCost: product.baseCost,
       category: product.category,
@@ -185,6 +238,38 @@ export function ProductManager({ products, taxes, currency, onAddProduct, onUpda
       images: product.images,
       variants: product.variants,
       taxes: product.taxes,
+      technicalSpecs: product.technicalSpecs || [],
+      videos: product.videos || [],
+      socialMedia: product.socialMedia || {
+        facebook: { enabled: false, postTemplate: '', hashtags: [] },
+        instagram: { enabled: false, postTemplate: '', hashtags: [] },
+        twitter: { enabled: false, postTemplate: '', hashtags: [] }
+      },
+      googleMerchant: product.googleMerchant || {
+        enabled: false,
+        productType: '',
+        googleProductCategory: '',
+        brand: '',
+        mpn: '',
+        gtin: '',
+        condition: 'new',
+        availability: 'in_stock',
+        shippingWeight: 0,
+        shippingDimensions: { length: 0, width: 0, height: 0, unit: 'cm' },
+        ageGroup: '',
+        gender: '',
+        color: '',
+        size: '',
+        material: '',
+        pattern: '',
+        customLabels: []
+      },
+      seoData: product.seoData || {
+        metaTitle: '',
+        metaDescription: '',
+        keywords: [],
+        slug: ''
+      },
       dianProductCode: product.dianProductCode || '',
       unidadMedida: product.unidadMedida,
       codigoBarras: product.codigoBarras || '',
@@ -314,7 +399,10 @@ export function ProductManager({ products, taxes, currency, onAddProduct, onUpda
                   { id: 'basic', label: 'Información Básica', icon: Tag },
                   { id: 'variants', label: 'Variantes', icon: Edit },
                   { id: 'images', label: 'Imágenes', icon: ImageIcon },
-                  { id: 'taxes', label: 'Impuestos', icon: DollarSign }
+                  { id: 'taxes', label: 'Impuestos', icon: DollarSign },
+                  { id: 'google', label: 'Google Shopping', icon: Eye },
+                  { id: 'social', label: 'Redes Sociales', icon: Upload },
+                  { id: 'seo', label: 'SEO', icon: Search }
                 ].map((tab) => {
                   const Icon = tab.icon;
                   return (
@@ -377,6 +465,19 @@ export function ProductManager({ products, taxes, currency, onAddProduct, onUpda
                         onChange={(e) => setFormData({...formData, description: e.target.value})}
                         rows={3}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Descripción Detallada
+                      </label>
+                      <textarea
+                        value={formData.longDescription}
+                        onChange={(e) => setFormData({...formData, longDescription: e.target.value})}
+                        rows={5}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Descripción completa para la página del producto..."
                       />
                     </div>
 
@@ -708,6 +809,686 @@ export function ProductManager({ products, taxes, currency, onAddProduct, onUpda
                           </div>
                         ))}
                       </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Google Shopping Tab */}
+                {activeTab === 'google' && (
+                  <div className="space-y-6">
+                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                      <h4 className="font-medium text-blue-900 mb-2">Google Shopping / Google Merchant Center</h4>
+                      <p className="text-sm text-blue-700">
+                        Configura tu producto para aparecer en Google Shopping y aumentar la visibilidad online.
+                      </p>
+                    </div>
+
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="google-enabled"
+                        checked={formData.googleMerchant.enabled}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          googleMerchant: { ...formData.googleMerchant, enabled: e.target.checked }
+                        })}
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      />
+                      <label htmlFor="google-enabled" className="ml-2 text-sm font-medium text-gray-700">
+                        Habilitar para Google Shopping
+                      </label>
+                    </div>
+
+                    {formData.googleMerchant.enabled && (
+                      <div className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Marca *
+                            </label>
+                            <input
+                              type="text"
+                              value={formData.googleMerchant.brand}
+                              onChange={(e) => setFormData({
+                                ...formData,
+                                googleMerchant: { ...formData.googleMerchant, brand: e.target.value }
+                              })}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              placeholder="Apple, Samsung, Nike..."
+                            />
+                          </div>
+                          
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Condición *
+                            </label>
+                            <select
+                              value={formData.googleMerchant.condition}
+                              onChange={(e) => setFormData({
+                                ...formData,
+                                googleMerchant: { ...formData.googleMerchant, condition: e.target.value as any }
+                              })}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            >
+                              <option value="new">Nuevo</option>
+                              <option value="used">Usado</option>
+                              <option value="refurbished">Reacondicionado</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Número de Parte del Fabricante (MPN)
+                            </label>
+                            <input
+                              type="text"
+                              value={formData.googleMerchant.mpn}
+                              onChange={(e) => setFormData({
+                                ...formData,
+                                googleMerchant: { ...formData.googleMerchant, mpn: e.target.value }
+                              })}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              placeholder="ABC123XYZ"
+                            />
+                          </div>
+                          
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              GTIN (Código de Barras Global)
+                            </label>
+                            <input
+                              type="text"
+                              value={formData.googleMerchant.gtin}
+                              onChange={(e) => setFormData({
+                                ...formData,
+                                googleMerchant: { ...formData.googleMerchant, gtin: e.target.value }
+                              })}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              placeholder="1234567890123"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Categoría de Google
+                          </label>
+                          <input
+                            type="text"
+                            value={formData.googleMerchant.googleProductCategory}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              googleMerchant: { ...formData.googleMerchant, googleProductCategory: e.target.value }
+                            })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Electronics > Computers > Laptops"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Color
+                            </label>
+                            <input
+                              type="text"
+                              value={formData.googleMerchant.color}
+                              onChange={(e) => setFormData({
+                                ...formData,
+                                googleMerchant: { ...formData.googleMerchant, color: e.target.value }
+                              })}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              placeholder="Negro, Azul, Rojo..."
+                            />
+                          </div>
+                          
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Talla
+                            </label>
+                            <input
+                              type="text"
+                              value={formData.googleMerchant.size}
+                              onChange={(e) => setFormData({
+                                ...formData,
+                                googleMerchant: { ...formData.googleMerchant, size: e.target.value }
+                              })}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              placeholder="S, M, L, XL..."
+                            />
+                          </div>
+                          
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Material
+                            </label>
+                            <input
+                              type="text"
+                              value={formData.googleMerchant.material}
+                              onChange={(e) => setFormData({
+                                ...formData,
+                                googleMerchant: { ...formData.googleMerchant, material: e.target.value }
+                              })}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              placeholder="Algodón, Plástico, Metal..."
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Grupo de Edad
+                            </label>
+                            <select
+                              value={formData.googleMerchant.ageGroup}
+                              onChange={(e) => setFormData({
+                                ...formData,
+                                googleMerchant: { ...formData.googleMerchant, ageGroup: e.target.value }
+                              })}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            >
+                              <option value="">Seleccionar...</option>
+                              <option value="adult">Adulto</option>
+                              <option value="kids">Niños</option>
+                              <option value="toddler">Niños Pequeños</option>
+                              <option value="infant">Bebés</option>
+                              <option value="newborn">Recién Nacidos</option>
+                            </select>
+                          </div>
+                          
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Género
+                            </label>
+                            <select
+                              value={formData.googleMerchant.gender}
+                              onChange={(e) => setFormData({
+                                ...formData,
+                                googleMerchant: { ...formData.googleMerchant, gender: e.target.value }
+                              })}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            >
+                              <option value="">Seleccionar...</option>
+                              <option value="male">Masculino</option>
+                              <option value="female">Femenino</option>
+                              <option value="unisex">Unisex</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Peso de Envío (kg)
+                          </label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={formData.googleMerchant.shippingWeight}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              googleMerchant: { ...formData.googleMerchant, shippingWeight: parseFloat(e.target.value) || 0 }
+                            })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Dimensiones de Envío
+                          </label>
+                          <div className="grid grid-cols-4 gap-3">
+                            <input
+                              type="number"
+                              step="0.1"
+                              placeholder="Largo"
+                              value={formData.googleMerchant.shippingDimensions?.length || ''}
+                              onChange={(e) => setFormData({
+                                ...formData,
+                                googleMerchant: {
+                                  ...formData.googleMerchant,
+                                  shippingDimensions: {
+                                    ...formData.googleMerchant.shippingDimensions,
+                                    length: parseFloat(e.target.value) || 0
+                                  }
+                                }
+                              })}
+                              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                            <input
+                              type="number"
+                              step="0.1"
+                              placeholder="Ancho"
+                              value={formData.googleMerchant.shippingDimensions?.width || ''}
+                              onChange={(e) => setFormData({
+                                ...formData,
+                                googleMerchant: {
+                                  ...formData.googleMerchant,
+                                  shippingDimensions: {
+                                    ...formData.googleMerchant.shippingDimensions,
+                                    width: parseFloat(e.target.value) || 0
+                                  }
+                                }
+                              })}
+                              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                            <input
+                              type="number"
+                              step="0.1"
+                              placeholder="Alto"
+                              value={formData.googleMerchant.shippingDimensions?.height || ''}
+                              onChange={(e) => setFormData({
+                                ...formData,
+                                googleMerchant: {
+                                  ...formData.googleMerchant,
+                                  shippingDimensions: {
+                                    ...formData.googleMerchant.shippingDimensions,
+                                    height: parseFloat(e.target.value) || 0
+                                  }
+                                }
+                              })}
+                              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                            <select
+                              value={formData.googleMerchant.shippingDimensions?.unit || 'cm'}
+                              onChange={(e) => setFormData({
+                                ...formData,
+                                googleMerchant: {
+                                  ...formData.googleMerchant,
+                                  shippingDimensions: {
+                                    ...formData.googleMerchant.shippingDimensions,
+                                    unit: e.target.value as 'cm' | 'in'
+                                  }
+                                }
+                              })}
+                              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            >
+                              <option value="cm">cm</option>
+                              <option value="in">in</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Etiquetas Personalizadas
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="Bestseller, Oferta, Nuevo (separar con comas)"
+                            value={formData.googleMerchant.customLabels?.join(', ') || ''}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              googleMerchant: {
+                                ...formData.googleMerchant,
+                                customLabels: e.target.value.split(',').map(label => label.trim()).filter(Boolean)
+                              }
+                            })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Social Media Tab */}
+                {activeTab === 'social' && (
+                  <div className="space-y-6">
+                    <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                      <h4 className="font-medium text-green-900 mb-2">Compartir en Redes Sociales</h4>
+                      <p className="text-sm text-green-700">
+                        Configura plantillas personalizadas para compartir este producto en redes sociales y WhatsApp.
+                      </p>
+                    </div>
+
+                    {/* Facebook */}
+                    <div className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center space-x-3 mb-4">
+                        <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                          <span className="text-white text-sm font-bold">f</span>
+                        </div>
+                        <div className="flex-1">
+                          <h5 className="font-medium text-gray-900">Facebook</h5>
+                          <p className="text-sm text-gray-500">Configura cómo se comparte en Facebook</p>
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={formData.socialMedia.facebook.enabled}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            socialMedia: {
+                              ...formData.socialMedia,
+                              facebook: { ...formData.socialMedia.facebook, enabled: e.target.checked }
+                            }
+                          })}
+                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        />
+                      </div>
+                      
+                      {formData.socialMedia.facebook.enabled && (
+                        <div className="space-y-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Plantilla de Publicación
+                            </label>
+                            <textarea
+                              value={formData.socialMedia.facebook.postTemplate}
+                              onChange={(e) => setFormData({
+                                ...formData,
+                                socialMedia: {
+                                  ...formData.socialMedia,
+                                  facebook: { ...formData.socialMedia.facebook, postTemplate: e.target.value }
+                                }
+                              })}
+                              rows={3}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              placeholder="🔥 ¡Nuevo producto disponible! {{productName}} - {{price}}. ¡No te lo pierdas!"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Hashtags
+                            </label>
+                            <input
+                              type="text"
+                              value={formData.socialMedia.facebook.hashtags.join(', ')}
+                              onChange={(e) => setFormData({
+                                ...formData,
+                                socialMedia: {
+                                  ...formData.socialMedia,
+                                  facebook: {
+                                    ...formData.socialMedia.facebook,
+                                    hashtags: e.target.value.split(',').map(tag => tag.trim()).filter(Boolean)
+                                  }
+                                }
+                              })}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              placeholder="producto, oferta, tecnologia (separar con comas)"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Instagram */}
+                    <div className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center space-x-3 mb-4">
+                        <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                          <span className="text-white text-sm font-bold">📷</span>
+                        </div>
+                        <div className="flex-1">
+                          <h5 className="font-medium text-gray-900">Instagram</h5>
+                          <p className="text-sm text-gray-500">Configura cómo se comparte en Instagram</p>
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={formData.socialMedia.instagram.enabled}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            socialMedia: {
+                              ...formData.socialMedia,
+                              instagram: { ...formData.socialMedia.instagram, enabled: e.target.checked }
+                            }
+                          })}
+                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        />
+                      </div>
+                      
+                      {formData.socialMedia.instagram.enabled && (
+                        <div className="space-y-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Plantilla de Publicación
+                            </label>
+                            <textarea
+                              value={formData.socialMedia.instagram.postTemplate}
+                              onChange={(e) => setFormData({
+                                ...formData,
+                                socialMedia: {
+                                  ...formData.socialMedia,
+                                  instagram: { ...formData.socialMedia.instagram, postTemplate: e.target.value }
+                                }
+                              })}
+                              rows={3}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              placeholder="✨ {{productName}} ✨ Disponible ahora por {{price}} 💫"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Hashtags
+                            </label>
+                            <input
+                              type="text"
+                              value={formData.socialMedia.instagram.hashtags.join(', ')}
+                              onChange={(e) => setFormData({
+                                ...formData,
+                                socialMedia: {
+                                  ...formData.socialMedia,
+                                  instagram: {
+                                    ...formData.socialMedia.instagram,
+                                    hashtags: e.target.value.split(',').map(tag => tag.trim()).filter(Boolean)
+                                  }
+                                }
+                              })}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              placeholder="producto, shop, style, trend (separar con comas)"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* WhatsApp */}
+                    <div className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center space-x-3 mb-4">
+                        <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                          <span className="text-white text-sm font-bold">📱</span>
+                        </div>
+                        <div className="flex-1">
+                          <h5 className="font-medium text-gray-900">WhatsApp</h5>
+                          <p className="text-sm text-gray-500">Plantilla para compartir por WhatsApp</p>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Mensaje de WhatsApp
+                        </label>
+                        <textarea
+                          value={formData.socialMedia.whatsapp?.postTemplate || ''}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            socialMedia: {
+                              ...formData.socialMedia,
+                              whatsapp: { 
+                                enabled: true, 
+                                postTemplate: e.target.value, 
+                                hashtags: [] 
+                              }
+                            }
+                          })}
+                          rows={3}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="¡Hola! Te comparto este increíble producto: {{productName}} por solo {{price}}. ¿Te interesa?"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Twitter */}
+                    <div className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center space-x-3 mb-4">
+                        <div className="w-8 h-8 bg-blue-400 rounded-full flex items-center justify-center">
+                          <span className="text-white text-sm font-bold">🐦</span>
+                        </div>
+                        <div className="flex-1">
+                          <h5 className="font-medium text-gray-900">Twitter</h5>
+                          <p className="text-sm text-gray-500">Configura cómo se comparte en Twitter</p>
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={formData.socialMedia.twitter.enabled}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            socialMedia: {
+                              ...formData.socialMedia,
+                              twitter: { ...formData.socialMedia.twitter, enabled: e.target.checked }
+                            }
+                          })}
+                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        />
+                      </div>
+                      
+                      {formData.socialMedia.twitter.enabled && (
+                        <div className="space-y-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Tweet Template (máx. 280 caracteres)
+                            </label>
+                            <textarea
+                              value={formData.socialMedia.twitter.postTemplate}
+                              onChange={(e) => setFormData({
+                                ...formData,
+                                socialMedia: {
+                                  ...formData.socialMedia,
+                                  twitter: { ...formData.socialMedia.twitter, postTemplate: e.target.value }
+                                }
+                              })}
+                              rows={3}
+                              maxLength={280}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              placeholder="🚀 {{productName}} disponible por {{price}}. ¡Aprovecha esta oferta!"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">
+                              {formData.socialMedia.twitter.postTemplate.length}/280 caracteres
+                            </p>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Hashtags
+                            </label>
+                            <input
+                              type="text"
+                              value={formData.socialMedia.twitter.hashtags.join(', ')}
+                              onChange={(e) => setFormData({
+                                ...formData,
+                                socialMedia: {
+                                  ...formData.socialMedia,
+                                  twitter: {
+                                    ...formData.socialMedia.twitter,
+                                    hashtags: e.target.value.split(',').map(tag => tag.trim()).filter(Boolean)
+                                  }
+                                }
+                              })}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              placeholder="producto, oferta, tech (separar con comas)"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* SEO Tab */}
+                {activeTab === 'seo' && (
+                  <div className="space-y-6">
+                    <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                      <h4 className="font-medium text-purple-900 mb-2">Optimización SEO</h4>
+                      <p className="text-sm text-purple-700">
+                        Mejora el posicionamiento de tu producto en motores de búsqueda como Google.
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Título SEO (Meta Title)
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.seoData.metaTitle}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          seoData: { ...formData.seoData, metaTitle: e.target.value }
+                        })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Título optimizado para SEO (50-60 caracteres)"
+                        maxLength={60}
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        {formData.seoData.metaTitle.length}/60 caracteres
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Descripción SEO (Meta Description)
+                      </label>
+                      <textarea
+                        value={formData.seoData.metaDescription}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          seoData: { ...formData.seoData, metaDescription: e.target.value }
+                        })}
+                        rows={3}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Descripción que aparecerá en los resultados de Google (150-160 caracteres)"
+                        maxLength={160}
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        {formData.seoData.metaDescription.length}/160 caracteres
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Palabras Clave
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.seoData.keywords.join(', ')}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          seoData: {
+                            ...formData.seoData,
+                            keywords: e.target.value.split(',').map(keyword => keyword.trim()).filter(Boolean)
+                          }
+                        })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="laptop, computadora, tecnologia, trabajo (separar con comas)"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        URL Amigable (Slug)
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.seoData.slug}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          seoData: { ...formData.seoData, slug: e.target.value }
+                        })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="laptop-dell-inspiron-15-intel-i5"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        URL final: /producto/{formData.seoData.slug || 'nombre-del-producto'}
+                      </p>
+                    </div>
+
+                    <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                      <h5 className="font-medium text-yellow-900 mb-2">Consejos SEO</h5>
+                      <ul className="text-sm text-yellow-700 space-y-1">
+                        <li>• Incluye palabras clave relevantes en el título</li>
+                        <li>• La descripción debe ser atractiva y descriptiva</li>
+                        <li>• Usa palabras clave que tus clientes buscarían</li>
+                        <li>• El slug debe ser corto y descriptivo</li>
+                      </ul>
                     </div>
                   </div>
                 )}
