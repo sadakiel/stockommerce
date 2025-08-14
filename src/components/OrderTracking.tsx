@@ -180,7 +180,11 @@ export function OrderTracking({ orders, recentSales, onUpdateOrderStatus, curren
                     return (
                       <button
                         key={status}
-                        onClick={() => canUpdate ? handleUpdateStatus(order.id, status as any) : null}
+                        onClick={() => {
+                          if (canUpdate && !isCurrent) {
+                            handleUpdateStatus(order.id, status as any);
+                          }
+                        }}
                         disabled={!canUpdate}
                         className={`p-2 text-xs rounded-lg transition-colors ${
                           isCurrent 
