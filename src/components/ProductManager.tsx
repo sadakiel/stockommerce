@@ -15,6 +15,7 @@ interface ProductManagerProps {
 export function ProductManager({ products, taxes, currency, onAddProduct, onUpdateProduct, onUploadImage }: ProductManagerProps) {
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<EnhancedProduct | null>(null);
+  const [viewingProduct, setViewingProduct] = useState<EnhancedProduct | null>(null);
   const [activeTab, setActiveTab] = useState<'basic' | 'variants' | 'images' | 'taxes'>('basic');
   
   const [formData, setFormData] = useState({
@@ -735,5 +736,14 @@ export function ProductManager({ products, taxes, currency, onAddProduct, onUpda
         </div>
       )}
     </div>
+      {/* Product Details Modal */}
+      {viewingProduct && (
+        <ProductDetailsModal
+          product={viewingProduct}
+          onClose={() => setViewingProduct(null)}
+          onAddToCart={() => {}}
+          currency={currency}
+        />
+      )}
   );
 }
