@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Upload, X, Edit, Trash2, Save, Eye, DollarSign, Tag, Image as ImageIcon } from 'lucide-react';
 import { EnhancedProduct, ProductVariant, ProductImage, TaxType } from '../types/product';
+import { ProductDetailsModal } from './ProductDetailsModal';
 
 interface ProductManagerProps {
   products: EnhancedProduct[];
@@ -26,6 +27,25 @@ export function ProductManager({ products, taxes, currency, onAddProduct, onUpda
     images: [] as ProductImage[],
     variants: [] as ProductVariant[],
     taxes: [] as string[],
+    technicalSpecs: [],
+    videos: [],
+    socialMedia: {
+      facebook: { enabled: false, postTemplate: '', hashtags: [] },
+      instagram: { enabled: false, postTemplate: '', hashtags: [] },
+      twitter: { enabled: false, postTemplate: '', hashtags: [] }
+    },
+    googleMerchant: {
+      enabled: false,
+      productType: '',
+      googleProductCategory: '',
+      brand: '',
+      condition: 'new',
+      availability: 'in_stock'
+    },
+    seoData: {
+      keywords: [],
+      slug: ''
+    },
     dianProductCode: '',
     unidadMedida: 'UND',
     codigoBarras: '',
@@ -258,7 +278,10 @@ export function ProductManager({ products, taxes, currency, onAddProduct, onUpda
                   <Edit className="w-4 h-4" />
                   <span>Editar</span>
                 </button>
-                <button className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                <button 
+                  onClick={() => setViewingProduct(product)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                >
                   <Eye className="w-4 h-4" />
                 </button>
               </div>

@@ -187,6 +187,66 @@ function App() {
         active: true
       }],
       taxes: ['1'],
+      technicalSpecs: [
+        { id: '1', name: 'Procesador', value: 'Intel Core i5-11400H', category: 'rendimiento', order: 1 },
+        { id: '2', name: 'Memoria RAM', value: '8', unit: 'GB', category: 'rendimiento', order: 2 },
+        { id: '3', name: 'Almacenamiento', value: '256', unit: 'GB SSD', category: 'almacenamiento', order: 1 },
+        { id: '4', name: 'Pantalla', value: '15.6"', category: 'display', order: 1 },
+        { id: '5', name: 'Resolución', value: '1920x1080', category: 'display', order: 2 },
+        { id: '6', name: 'Sistema Operativo', value: 'Windows 11 Home', category: 'software', order: 1 }
+      ],
+      videos: [
+        {
+          id: '1',
+          title: 'Review Completo - Dell Inspiron 15',
+          url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+          type: 'youtube',
+          description: 'Análisis detallado de rendimiento y características',
+          duration: '12:34',
+          order: 1
+        }
+      ],
+      socialMedia: {
+        facebook: {
+          enabled: true,
+          postTemplate: '🔥 ¡Nueva Dell Inspiron disponible! Perfecta para trabajo y estudio. Procesador Intel i5, 8GB RAM y SSD de 256GB.',
+          hashtags: ['laptop', 'dell', 'tecnologia', 'trabajo', 'estudio']
+        },
+        instagram: {
+          enabled: true,
+          postTemplate: '💻 Dell Inspiron 15 - La laptop perfecta para tu día a día ✨',
+          hashtags: ['laptop', 'tech', 'dell', 'work', 'productivity']
+        },
+        twitter: {
+          enabled: true,
+          postTemplate: '🚀 Nueva Dell Inspiron 15 disponible. Rendimiento profesional a precio increíble.',
+          hashtags: ['laptop', 'dell', 'tech', 'deals']
+        }
+      },
+      googleMerchant: {
+        enabled: true,
+        productType: 'Electronics > Computers > Laptops',
+        googleProductCategory: 'Electronics > Computers > Laptops',
+        brand: 'Dell',
+        mpn: 'INSPIRON-15-3000',
+        condition: 'new',
+        availability: 'in_stock',
+        shippingWeight: 2.1,
+        shippingDimensions: {
+          length: 35.8,
+          width: 24.7,
+          height: 1.99,
+          unit: 'cm'
+        },
+        color: 'Negro',
+        customLabels: ['Bestseller', 'Recomendado']
+      },
+      seoData: {
+        metaTitle: 'Laptop Dell Inspiron 15 - Intel i5, 8GB RAM, 256GB SSD',
+        metaDescription: 'Laptop Dell Inspiron 15 con procesador Intel Core i5, 8GB de RAM y SSD de 256GB. Perfecta para trabajo, estudio y entretenimiento.',
+        keywords: ['laptop', 'dell', 'inspiron', 'intel i5', 'ssd', 'trabajo', 'estudio'],
+        slug: 'laptop-dell-inspiron-15-intel-i5-8gb-256gb'
+      },
       tenantId: 'tenant1',
       active: true,
       unidadMedida: 'UND',
@@ -251,6 +311,67 @@ function App() {
       prefix: 'TKT-' + new Date().toISOString().split('T')[0] + '-',
       }],
       taxes: [],
+      technicalSpecs: [
+        { id: '1', name: 'Tipo de Switch', value: 'Mecánico Blue', category: 'rendimiento', order: 1 },
+        { id: '2', name: 'Retroiluminación', value: 'RGB Personalizable', category: 'diseño', order: 1 },
+        { id: '3', name: 'Conectividad', value: 'USB-C', category: 'conectividad', order: 1 },
+        { id: '4', name: 'Layout', value: 'Español (ES)', category: 'diseño', order: 2 },
+        { id: '5', name: 'Anti-ghosting', value: 'N-Key Rollover', category: 'rendimiento', order: 2 },
+        { id: '6', name: 'Durabilidad', value: '50 millones de pulsaciones', category: 'calidad', order: 1 }
+      ],
+      videos: [
+        {
+          id: '1',
+          title: 'Unboxing y Primera Impresión',
+          url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+          type: 'youtube',
+          description: 'Desempaque y primeras impresiones del teclado mecánico RGB',
+          duration: '8:45',
+          order: 1
+        },
+        {
+          id: '2',
+          title: 'Test de Gaming - Fortnite',
+          url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+          type: 'youtube',
+          description: 'Prueba de rendimiento en gaming competitivo',
+          duration: '15:20',
+          order: 2
+        }
+      ],
+      socialMedia: {
+        facebook: {
+          enabled: true,
+          postTemplate: '⌨️ ¡Nuevo teclado mecánico RGB! Switches Blue, retroiluminación personalizable y diseño gaming profesional.',
+          hashtags: ['teclado', 'mecanico', 'rgb', 'gaming', 'switches', 'blue']
+        },
+        instagram: {
+          enabled: true,
+          postTemplate: '🌈 Teclado mecánico RGB - Switches Blue para la mejor experiencia de escritura y gaming ⌨️✨',
+          hashtags: ['keyboard', 'mechanical', 'rgb', 'gaming', 'tech', 'setup']
+        },
+        twitter: {
+          enabled: true,
+          postTemplate: '⌨️ Nuevo teclado mecánico RGB con switches Blue. Perfecto para gaming y productividad.',
+          hashtags: ['keyboard', 'mechanical', 'rgb', 'gaming', 'productivity']
+        }
+      },
+      googleMerchant: {
+        enabled: true,
+        productType: 'Electronics > Computer Accessories > Input Devices > Computer Keyboards',
+        googleProductCategory: 'Electronics > Computer Accessories > Input Devices > Computer Keyboards',
+        brand: 'TechKeyboard',
+        condition: 'new',
+        availability: 'in_stock',
+        color: 'Negro con RGB',
+        customLabels: ['Gaming', 'Mecánico', 'RGB']
+      },
+      seoData: {
+        metaTitle: 'Teclado Mecánico RGB Gaming - Switches Blue, Retroiluminación Personalizable',
+        metaDescription: 'Teclado mecánico RGB para gaming con switches Blue, retroiluminación personalizable y N-Key Rollover. Ideal para gamers y profesionales.',
+        keywords: ['teclado', 'mecánico', 'rgb', 'gaming', 'switches', 'blue', 'retroiluminación'],
+        slug: 'teclado-mecanico-rgb-gaming-switches-blue'
+      },
       tenantId: 'tenant1',
       active: true,
       unidadMedida: 'UND',

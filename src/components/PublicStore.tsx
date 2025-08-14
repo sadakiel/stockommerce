@@ -3,6 +3,7 @@ import { ShoppingCart, Plus, Minus, Search, Filter, Grid, List, ChevronLeft, Che
 import { Product, Sale, Tenant } from '../App';
 import { Campaign, BannerSettings, ProductHighlight } from '../types/campaigns';
 import { useTranslation } from '../hooks/useTranslation';
+import { ProductDetailsModal } from './ProductDetailsModal';
 
 interface PublicStoreProps {
   products: Product[];
@@ -35,6 +36,7 @@ export function PublicStore({ products, tenant, campaigns, bannerSettings, produ
   });
   const [showCategoryMenu, setShowCategoryMenu] = useState(false);
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
+  const [viewingProduct, setViewingProduct] = useState<Product | null>(null);
 
   // Auto-rotate campaigns
   React.useEffect(() => {
@@ -784,6 +786,18 @@ export function PublicStore({ products, tenant, campaigns, bannerSettings, produ
             )}
           </div>
         </div>
+      )}
+
+      {/* Product Details Modal */}
+      {viewingProduct && (
+        <ProductDetailsModal
+          product={viewingProduct as any}
+          onClose={() => setViewingProduct(null)}
+          onAddToCart={addToCart}
+          currency={tenant.settings.currency}
+          getDiscountedPrice={getDiscountedPrice}
+          getProductHighlight={getProductHighlight}
+        />
       )}
     </div>
   );

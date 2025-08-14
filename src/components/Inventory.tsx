@@ -140,7 +140,10 @@ export function Inventory({ products, onAddProduct, onUpdateProduct }: Inventory
                   <Edit className="w-4 h-4" />
                   <span>Editar</span>
                 </button>
-                <button className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                <button 
+                  onClick={() => setViewingProduct(product)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                >
                   <Eye className="w-4 h-4" />
                 </button>
               </div>
