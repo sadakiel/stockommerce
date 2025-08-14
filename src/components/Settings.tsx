@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Save, Upload, Palette, Eye, Hash, Globe, Plus, CheckCircle, CreditCard, Trash2, Edit, Settings as SettingsIcon } from 'lucide-react';
+import { Save, Upload, Palette, Eye, Hash, Globe, Plus, CheckCircle, CreditCard, Trash2, Edit, Settings as SettingsIcon, X } from 'lucide-react';
 import { Tenant } from '../App';
 import { DocumentNumberingConfig } from './DocumentNumberingConfig';
 import { useTranslation } from '../hooks/useTranslation';
