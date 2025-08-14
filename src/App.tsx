@@ -892,6 +892,10 @@ function App() {
     setDocumentNumberings(prev => prev.filter(n => n.id !== id));
   };
 
+  const updatePaymentMethods = (methods: any[]) => {
+    setPaymentMethods(methods);
+  };
+
   // Listen for inventory movement events from physical count
   React.useEffect(() => {
     const handleInventoryMovement = (event: any) => {
@@ -1106,9 +1110,11 @@ function App() {
             <Settings
               tenant={currentTenant}
               documentNumberings={documentNumberings.filter(n => n.tenantId === currentUser.tenantId)}
+              paymentMethods={paymentMethods}
               onCreateNumbering={createDocumentNumbering}
               onUpdateNumbering={updateDocumentNumbering}
               onDeleteNumbering={deleteDocumentNumbering}
+              onUpdatePaymentMethods={updatePaymentMethods}
               onUpdateTenant={(updates) => {
                 setTenants(prev => prev.map(t => 
                   t.id === currentUser.tenantId ? { ...t, ...updates } : t
