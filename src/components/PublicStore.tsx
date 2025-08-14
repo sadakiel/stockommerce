@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShoppingCart, Plus, Search, Filter, Grid, List, ChevronLeft, ChevronRight, Star, Tag, User, ChevronDown, Globe } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, Search, Filter, Grid, List, ChevronLeft, ChevronRight, Star, Tag, User, ChevronDown, Globe } from 'lucide-react';
 import { Product, Sale, Tenant } from '../App';
 import { Campaign, BannerSettings, ProductHighlight } from '../types/campaigns';
 import { useTranslation } from '../hooks/useTranslation';
