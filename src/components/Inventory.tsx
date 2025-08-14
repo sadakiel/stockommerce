@@ -140,10 +140,7 @@ export function Inventory({ products, onAddProduct, onUpdateProduct }: Inventory
                   <Edit className="w-4 h-4" />
                   <span>Editar</span>
                 </button>
-                <button 
-                  onClick={() => setViewingProduct(product)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                >
+                <button className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                   <Eye className="w-4 h-4" />
                 </button>
               </div>
@@ -366,6 +363,16 @@ export function Inventory({ products, onAddProduct, onUpdateProduct }: Inventory
             </form>
           </div>
         </div>
+      )}
+
+      {/* Product Details Modal */}
+      {viewingProduct && (
+        <ProductDetailsModal
+          product={viewingProduct as any}
+          onClose={() => setViewingProduct(null)}
+          onAddToCart={() => {}} // Not applicable in inventory view
+          currency="COP"
+        />
       )}
     </div>
   );
