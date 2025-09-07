@@ -51,7 +51,7 @@ export function ProductDetailsModal({
 
   const shareProduct = async (platform: string) => {
     const productUrl = `${window.location.origin}/product/${product.id}`;
-    const text = product.socialMedia[platform as keyof typeof product.socialMedia]?.postTemplate || 
+    const text = product.socialMedia?.[platform as keyof typeof product.socialMedia]?.postTemplate || 
                  `¡Mira este increíble producto! ${product.name} - ${currencySymbol}${discountedPrice.toFixed(2)}`;
     
     const urls = {
