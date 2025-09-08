@@ -1,7 +1,5 @@
 {
-  // ...otros campos
-  "dependencies": {
-    // ...otras dependencias
+   "dependencies": {
     "@supabase/supabase-js": "^2.39.7",
     "uuid": "^9.0.1"
   }
