@@ -1,6 +1,29 @@
 {
-   "dependencies": {
+  "name": "stockommerce",
+  "version": "1.0.0",
+  "description": "Proyecto React conectado a Supabase",
+  "main": "src/main.jsx",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
     "@supabase/supabase-js": "^2.39.7",
-    "uuid": "^9.0.1"
-  }
+    "uuid": "^9.0.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "vite": "^4.0.0",
+    "@vitejs/plugin-react": "^4.0.0"
+  },
+  "keywords": [
+    "react",
+    "supabase",
+    "vite",
+    "stockommerce"
+  ],
+  "author": "sadakiel",
+  "license": "MIT"
 }
